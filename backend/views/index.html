@@ -1,12 +1,67 @@
 <html>
     <Title>IMDB Dataset</Title>
     <head>
-        <H2>Welcome to the IMDB Dataset</H2>
         <script src = ../index.js></script>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background: linear-gradient(#ffffff, #dddddd);
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }
+            header {
+                background-color: #333;
+                color: #fff;
+                padding: 20px;
+                text-align: center;
+            }
+            main {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            footer {
+                background-color: #333;
+                color: #fff;
+                padding: 20px;
+                text-align: center;
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+            }
+    
+            a:hover {
+                text-decoration: underline;
+            }
+    
+            a {
+                background-color: #0077cc;
+                border: 2px solid #0077cc;
+                border-radius: 4px;
+                color: #fff;
+                display: inline-block;
+                font-size: 16px;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                transition: background-color 0.2s ease-in-out;
+                }
+    
+            a.button:hover {
+                background-color: #005ea2;
+                border-color: #005ea2;
+            }
+        </style>
     </head>
 
     <body>
-        <h3>Actions:</h3>
+        <header>
+            <H2>Welcome to the IMDB Dataset</H2>
+        </header>
+        <main>
+            <h3>Actions:</h3>
         <a id = "readData" onclick="readData()">Read Data</a>
         
         <dl>
@@ -16,5 +71,7 @@
         </dl>
         
         <a href="/editData">Edit Data</a>
+        </main>
+        <footer></footer>
     </body>
 </html>
