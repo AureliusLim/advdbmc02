@@ -1,23 +1,26 @@
-// other posible js functions
-// dont mind, for future use
 
-// check if connection is up
-if(connection.state === 'disconnected'){
-    // return respond(null, { status: 'fail', message: 'server down'});
-
-    // else use different node depending on situation
-  }
-
-
-
-// for locks if using
-// https://hevodata.com/learn/mysql-locks/#:~:text=MySQL%20Locks%3A%20Examples,-MySQL%20Locks%3A%20Example&text=mysql>%20LOCK%20TABLE%20t%20WRITE,times%20with%20the%20same%20name.
-
-
-// check connections
-window.addEventListener("load", (event) => {
-    const statusDisplay = document.getElementById("status");
-    statusDisplay.textContent = navigator.onLine ? "Online" : "OFFline";
-  });
-
+function writeToFile(path, binary, object){
+    print( "Writing " + path + " to file..." );
+    var output = writeFile( path, mode, object );
+    print( "The number of bytes written to file was: " + output );
+    return output
+}
+function before1980(){
+  $.get('/node2read', {}, (result) => {
+    //console.log(Object.keys(result[0]));
+    
+    var header = Object.keys(result[0]);
+    headerString = header.join(",");
+    var arr="";
+    for (let i = 0; i < result.length; i++){
+        arr += Object.values(result[i]).join(',');
+        arr += "\n";
+        //console.log(Object.values(result[i]).join(','))
+    }
+    var filePath = "../files/output.csv";
+    var isMode = null;
+    var fileObject = arr;
+    writeToFile(filePath,isMode,fileObject)
+  })
+}
 

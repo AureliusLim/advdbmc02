@@ -4,11 +4,14 @@ const connections = require('./connections.js');
 const path = require('path');
 const PORT = 4000;
 const app = express();
+const fs = require('fs');
+
 
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
+app.use(express.static(__dirname));
 
 
 app.get('/',(req,res)=>{
@@ -43,45 +46,123 @@ app.get('/editData',(req,res)=>{
 
 
 app.get('/centralread', async(req,res)=>{
-    connections.node1.connect((err)=>{
-        if(err){
-            console.log(err);
-        }
-        else{
-            var query = "Select * from centraldata";
-            connections.node1.query(query, async(err, result)=>{
-                if(err){
-                    console.log(err)
-                }
-                else{
-                    console.log(result)
-                }
+        connections.node1.connect((err)=>{
+            if(err){
+                //console.log(err);
+                //res.sendFile(path.join(__dirname,'views/centralBackup.html'));
+                // Put error message that server is down
+            }
+            
+            else{
+                var query = "Select * from centraldata";
+                connections.node1.query(query, async(err, result)=>{
+                    if(err){
+                        console.log(err)
+                    }
+                    else{
+                        var header = Object.keys(result[0]);
+                        headerString = header.join(",");
+                        var arr="";
+                        arr += headerString;
+                        arr += "\n";
+                        var temp;
+                        console.log("IN")
                 
-            })
-        }
-    })
-    res.sendFile(path.join(__dirname,'views/centralNode.html'));
+                        for (let i = 0; i < result.length; i++){
+                            temp = Object.values(result[i]);
+                            temp[1] = temp[1].replaceAll(',','');
+                            temp = temp.toString();
+                            temp += ',';
+                            arr += temp;
+                            arr += "\n";
+                            //console.log(Object.values(result[i]).join(','))
+                        }
+    
+    
+    
+    
+                        try {
+                            fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
+                                if(err){
+                                    console.log(err)
+                                }
+                                else{
+                                    console.log("saved")
+                                    res.download(path.join(__dirname, 'files', "output.csv"))
+                                }
+                            });
+                            // file written successfully
+                          } catch (err) {
+                            console.error(err);
+                          }
+                    }
+                    
+                })
+                //res.sendFile(path.join(__dirname,'views/centralNode.html'));
+            }
+        })
+    
 })
 
 app.get('/node2read', async(req,res)=>{
     connections.node2.connect((err)=>{
         if(err){
             console.log(err);
+            //PUT ERROR
+            
         }
         else{
-            var query = "Select * from node2";
+            var query = "Select * from before1980";
             connections.node2.query(query, async(err, result)=>{
                 if(err){
                     console.log(err)
                 }
                 else{
-                    console.log(result)
+                   
+                    var header = Object.keys(result[0]);
+                    headerString = header.join(",");
+                    var arr="";
+                    arr += headerString;
+                    arr += "\n";
+                    var temp;
+                    console.log("IN")
+            
+                    for (let i = 0; i < result.length; i++){
+                        temp = Object.values(result[i]);
+                        temp[1] = temp[1].replaceAll(',','');
+                        temp = temp.toString();
+                        temp += ',';
+                        arr += temp;
+                        arr += "\n";
+                        
+                    }
+
+
+
+
+                    try {
+                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
+                            if(err){
+                                console.log(err)
+                            }
+                            else{
+                                console.log("saved")
+                                res.download(path.join(__dirname, 'files', "output.csv"))
+                            }
+                        });
+                        // file written successfully
+                      } catch (err) {
+                        console.error(err);
+                      }
+
                 }
                 
             })
+            //res.sendFile(path.join(__dirname,'views/node1.html'));
+           
         }
     })
-    res.sendFile(path.join(__dirname,'views/node1.html'));
+   
 })
 app.get('/node3read', async(req,res)=>{
     connections.node3.connect((err)=>{
@@ -89,19 +170,54 @@ app.get('/node3read', async(req,res)=>{
             console.log(err);
         }
         else{
-            var query = "Select * from node3";
+            var query = "Select * from after1980";
             connections.node3.query(query, async(err, result)=>{
                 if(err){
                     console.log(err)
                 }
                 else{
-                    console.log(result)
+                    var header = Object.keys(result[0]);
+                    headerString = header.join(",");
+                    var arr="";
+                    arr += headerString;
+                    arr += "\n";
+                    var temp;
+                    console.log("IN")
+            
+                    for (let i = 0; i < result.length; i++){
+                        temp = Object.values(result[i]);
+                        temp[1] = temp[1].replaceAll(',','');
+                        temp = temp.toString();
+                        temp += ',';
+                        arr += temp;
+                        arr += "\n";
+                        //console.log(Object.values(result[i]).join(','))
+                    }
+
+
+
+
+                    try {
+                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
+                            if(err){
+                                console.log(err)
+                            }
+                            else{
+                                console.log("saved")
+                                res.download(path.join(__dirname, 'files', "output.csv"))
+                            }
+                        });
+                        // file written successfully
+                      } catch (err) {
+                        console.error(err);
+                      }
                 }
                 
             })
+            //res.sendFile(path.join(__dirname,'views/node2.html'));
         }
     })
-    res.sendFile(path.join(__dirname,'views/node2.html'));
+    
 })
 app.get('/centraldelete', async(req, res)=>{
     movie = req.body.movie_id;
