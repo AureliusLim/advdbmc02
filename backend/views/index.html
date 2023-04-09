@@ -37,7 +37,7 @@
             a:hover {
                 text-decoration: underline;
             }
-    
+
             a {
                 background-color: #0077cc;
                 border: 2px solid #0077cc;
@@ -48,14 +48,52 @@
                 padding: 10px 20px;
                 text-align: center;
                 text-decoration: none;
-                transition: background-color 0.2s ease-in-out;
-                }
-    
-            a.button:hover {
-                background-color: #005ea2;
-                border-color: #005ea2;
             }
+
+            .form-popup {
+                display: none;
+                margin-top: 15px;
+                width: 300px;
+                border-radius: 4px;
+                background-color: #fafafa;
+                padding: 20px;
+                box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+            }
+
+            .form-popup form {
+                padding: 20px;
+            }
+
+            .form-popup .cancel {
+                background-color: #dc766f;
+            }
+
         </style>
+        <script>
+            function openForm() {
+                document.getElementById("myForm").style.display = "block";
+            }
+            function closeForm() {
+                document.getElementsByName("filter")[0].checked=false;
+                document.getElementsByName("filter")[1].checked=false;
+                document.getElementsByName("filter")[2].checked=false;
+                document.getElementById("myForm").style.display = "none";
+            }
+            function submitForm() {
+                var selectedFilter = document.querySelector('input[name="filter"]:checked');
+                if (selectedFilter === null) {
+                    alert("Please select a filter option.");
+                    return;
+                } else if (selectedFilter.value === "before1980") {
+                    window.location.href = "/node2read";
+                } else if (selectedFilter.value === "after1980") {
+                    window.location.href = "/node3read";
+                } else if (selectedFilter.value === "all") {
+                    window.location.href = "/centralread"; /*need changes to corresponding function*/
+                    document.getElementById("myForm").style.display = "none";
+                }
+            }
+            </script>
     </head>
 
     <body>
@@ -64,15 +102,21 @@
         </header>
         <main>
             <h3>Actions:</h3>
-        <a id = "readData" onclick="readData()">Read Data</a>
-        
-        <dl>
-            <a href="/centralread">All<br/></a>
-            <a href="/node2read">Before 1980<br/></a>
-            <a href="/node3read">During and After 1980<br/></a>
-        </dl>
-        
+        <a id = "readData" onclick="openForm()">Read Data</a>
         <a href="/editData">Edit Data</a>
+        <div id="myForm" class="form-popup">
+            <form action="/submit-form">
+              <h2>Please select a filter:</h2>  
+              <input type="radio" id="before1980" name="filter" value="before1980" required>
+              <label for="before1980">Before 1980</label><br>
+              <input type="radio" id="after1980" name="filter" value="after1980" required>
+              <label for="after1980">During and After 1980</label><br>
+              <input type="radio" id="all" name="filter" value="all" required>
+              <label for="all">All</label><br><br>
+              <button type="button" class="btn" onclick="submitForm()">Download</button>
+              <button type="button" class="btn cancel" onclick="closeForm()">Cancel</button>
+            </form>
+          </div>
         </main>
         <footer></footer>
     </body>
