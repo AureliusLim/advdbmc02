@@ -4,6 +4,7 @@ const connections = require('./connections.js');
 const path = require('path');
 const PORT = 4000;
 const app = express();
+const cookieParser = require("cookie-parser")
 const fs = require('fs');
 
 
@@ -12,9 +13,15 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
-
+app.use(cookieParser());
 
 app.get('/',(req,res)=>{
+    res.clearCookie("movieName", { httpOnly: true });
+    res.clearCookie("movieYear", { httpOnly: true });
+    res.clearCookie("movieGenre", { httpOnly: true });
+    res.clearCookie("director", { httpOnly: true });
+    res.clearCookie("actor1", { httpOnly: true });
+    res.clearCookie("actor2", { httpOnly: true });
     res.sendFile(path.join(__dirname,'views/index.html'));
 })
 
@@ -46,7 +53,7 @@ app.get('/editData',(req,res)=>{
 
 
 app.get('/centralread', async(req,res)=>{
-        connections.node1.connect((err)=>{
+        connections.node1.getConnection((err,connection)=>{
             if(err){
                 
                 // Put error message that server is down
@@ -56,7 +63,7 @@ app.get('/centralread', async(req,res)=>{
                 let arr2="";
                 var query = "Select * from before1980";
                 var query1 = "Select * from after1980";
-                connections.node2.query(query, async(err, result)=>{
+                connection.query(query, async(err, result)=>{
                     if(err){
 
                     }
@@ -214,7 +221,7 @@ app.get('/centralread', async(req,res)=>{
 })
 
 app.get('/node2read', async(req,res)=>{
-    connections.node2.connect((err)=>{
+    connections.node2.getConnection((err,connection)=>{
         if(err){
             let headerString;
             let header;
@@ -317,7 +324,7 @@ app.get('/node2read', async(req,res)=>{
    
 })
 app.get('/node3read', async(req,res)=>{
-    connections.node3.connect((err)=>{
+    connections.node3.getConnection((err,connection)=>{
         if(err){
             let headerString;
             let header;
@@ -419,7 +426,7 @@ app.get('/centraldelete', async(req, res)=>{
     movie = req.body.movie_id;
     //testing
     //movie = '2'
-    connections.node1.connect((err)=>{
+    connections.node1.getConnection((err,connection)=>{
         if(err){
             console.log(err);
         }
@@ -442,7 +449,7 @@ app.get('/node2delete', async(req, res)=>{
     movie = req.body.movie_id;
     // testing
     //movie = '5'; 
-    connections.node2.connect((err)=>{
+    connections.node2.getConnection((err,connection)=>{
         if(err){
             console.log(err);
         }
@@ -465,7 +472,7 @@ app.get('/node3delete', async(req, res)=>{
     movie = req.body.movie_id;
     // testing
     //movie = '15'; 
-    connections.node3.connect((err)=>{
+    connections.node3.getConnection((err,connection)=>{
         if(err){
             console.log(err);
         }
@@ -484,33 +491,47 @@ app.get('/node3delete', async(req, res)=>{
        
     })
 })
+app.post('/connectionstatus', (req, res)=>{
+    res.cookie("movieName", req.body.name,{httpOnly:true})
+    res.cookie("movieYear", req.body.year, {httpOnly:true})
+    res.cookie("movieGenre", req.body.genre, {httpOnly:true})
+    res.cookie("director",req.body.director_id, {httpOnly:true})
+    res.cookie("actor1", req.body.actor1, {httpOnly:true})
+    res.cookie("actor2", req.body.actor2, {httpOnly:true})
+    console.log("inside connection");
+
+    connections.node1.getConnection((err,connection)=>{
+        if(err){
+            //redirect to something else
+            console.log(err)
+        }
+        else{
+           
+            res.redirect('/centralinsert')
+        }
+    
+    })
+})
 
 app.get('/centralinsert', async(req, res)=>{
     
-    movieName = req.body.name;
-    movieYear = req.body.year;
-    movieGenre = req.body.genre;
-    director = req.body.director_id;
-    actor1 = req.body.actor1;
-    actor2 = req.body.actor2;
+    
+    let movieName = req.cookies["movieName"]
+    let movieYear = req.cookies["movieYear"]
+    let movieGenre = req.cookies["movieGenre"]
+    let director = req.cookies["director"]
+    let actor1 = req.cookies["actor1"]
+    let actor2 = req.cookies["actor2"]
+   
+   
 
-    // testing
-    // movieName = "testmovie";
-    // movieYear = "2023";
-    // movieGenre = "Comedy,Horror";
-    // director = "430530459";
-    // actor1 = "23904824";
-    // actor2 = "23940234";
+   
     var generated_id;
-    connections.node1.connect(async(err)=>{
-        if(err){
-            console.log(err);
-        }
-        else{
+   
             var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
             // generate movieid
             var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
-            connections.node1.query(query2, async(err, result)=>{
+            connections.node1.query(query2, (err, result)=>{
                 if(err){
                     console.log(err);
                 }
@@ -528,30 +549,29 @@ app.get('/centralinsert', async(req, res)=>{
                 }
                 else{
                     console.log(result)
+                    if(Number(movieYear) <= 1980){
+                        
+                        res.redirect('/node2insert')
+                    }
+                    else{
+                       
+                        res.redirect('/node3insert')
+                    }
                 }
             })
-        }
-    })
+            
 })
 
 app.get('/node2insert', async(req, res)=>{
     
-    movieName = req.body.name;
-    movieYear = req.body.year;
-    movieGenre = req.body.genre;
-    director = req.body.director_id;
-    actor1 = req.body.actor1;
-    actor2 = req.body.actor2;
-
-    // testing
-    movieName = "testmovie";
-    movieYear = "2023";
-    movieGenre = "Comedy,Horror";
-    director = "430530459";
-    actor1 = "23904824";
-    actor2 = "23940234";
+    let movieName = req.cookies["movieName"]
+    let movieYear = req.cookies["movieYear"]
+    let movieGenre = req.cookies["movieGenre"]
+    let director = req.cookies["director"]
+    let actor1 = req.cookies["actor1"]
+    let actor2 = req.cookies["actor2"]
     var generated_id;
-    connections.node2.connect(async(err)=>{
+    connections.node2.getConnection(async(err,connection)=>{
         if(err){
             console.log(err);
         }
@@ -576,30 +596,25 @@ app.get('/node2insert', async(req, res)=>{
                     console.log(err);
                 }
                 else{
+                    res.redirect('/editData')
+                   
                     console.log(result)
                 }
             })
         }
     })
+    
 })
 app.get('/node3insert', async(req, res)=>{
     
-    movieName = req.body.name;
-    movieYear = req.body.year;
-    movieGenre = req.body.genre;
-    director = req.body.director_id;
-    actor1 = req.body.actor1;
-    actor2 = req.body.actor2;
-
-    // testing
-    movieName = "testmovie";
-    movieYear = "2023";
-    movieGenre = "Comedy,Horror";
-    director = "430530459";
-    actor1 = "23904824";
-    actor2 = "23940234";
+    let movieName = req.cookies["movieName"]
+    let movieYear = req.cookies["movieYear"]
+    let movieGenre = req.cookies["movieGenre"]
+    let director = req.cookies["director"]
+    let actor1 = req.cookies["actor1"]
+    let actor2 = req.cookies["actor2"]
     var generated_id;
-    connections.node3.connect(async(err)=>{
+    connections.node3.getConnection(async(err,connection)=>{
         if(err){
             console.log(err);
         }
@@ -624,11 +639,13 @@ app.get('/node3insert', async(req, res)=>{
                     console.log(err);
                 }
                 else{
+                    res.redirect('/editData')
                     console.log(result)
                 }
             })
         }
     })
+   
 })
 
 app.listen(PORT, ()=>{

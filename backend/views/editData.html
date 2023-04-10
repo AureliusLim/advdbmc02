@@ -84,7 +84,7 @@
         <main>
             <h3>Actions:</h3>
             <div class="forms">
-                <form method="GET" action="/centralinsert">
+                <form id="insertform" method="POST" action="/connectionstatus">
                     <!-- check if doesnt exist -->
                     <label for="name">Movie Name:</label>
                     <input type="text" id="name" name="name"><br>
@@ -103,7 +103,7 @@
 
                     <label for="actor2">Movie Actor 2:</label>
                     <input type="text" id="actor2" name="actor2"><br>
-                    <a href = "/addData">Insert Data</a>
+                    <a href="javascript:{}" onclick="document.getElementById('insertform').submit();">Insert Data</a>
                 </form>
                 <form>
                     <!-- check if exist  -->
