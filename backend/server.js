@@ -48,9 +48,118 @@ app.get('/editData',(req,res)=>{
 app.get('/centralread', async(req,res)=>{
         connections.node1.connect((err)=>{
             if(err){
-                //console.log(err);
-                //res.sendFile(path.join(__dirname,'views/centralBackup.html'));
+                
                 // Put error message that server is down
+                let headerString;
+                let header;
+                let arr="";
+                let arr2="";
+                var query = "Select * from before1980";
+                var query1 = "Select * from after1980";
+                connections.node2.query(query, async(err, result)=>{
+                    if(err){
+
+                    }
+                    else{
+                        header = Object.keys(result[0]);
+                        headerString = header.join(",");
+                        arr += headerString;
+                        arr += "\n";
+                        let temp;
+                        
+                
+                        for (let i = 0; i < result.length; i++){
+                            temp = Object.values(result[i]);
+                            temp[1] = temp[1].replaceAll(',','');
+                            temp = temp.toString();
+                            temp += ',';
+                            arr += temp;
+                            arr += "\n";
+                            
+                        }
+                        connections.node3.query(query1, async(err, result)=>{
+                            if(err){
+
+                            }
+                            else{
+                              
+                                for (let i = 0; i < result.length; i++){
+                                    temp = Object.values(result[i]);
+                                    temp[1] = temp[1].replaceAll(',','');
+                                    temp = temp.toString();
+                                    temp += ',';
+                                    arr2 += temp;
+                                    arr2 += "\n";
+                                    
+                                }
+                                // sort arr and arr2 when combining the data from node2 and node3
+                                let finalarr="";
+                                arr = arr.split('\n')
+                                arr2 = arr2.split('\n')
+                                finalarr += arr[0]
+                                finalarr += '\n'
+                                let count1 = 1; //skip header
+                                let count2 = 0;
+                                console.log(arr.length)
+                                console.log(arr2.length)
+                                while(count1 < arr.length && count2 < arr2.length){
+                                    firstpart = arr[count1].split(',');
+                                    secondpart = arr2[count2].split(',')
+                                    
+                                    if(Number(firstpart[0]) < Number(secondpart[0])){ 
+                                        finalarr += arr[count1]
+                                        finalarr += '\n'
+                                        count1++
+                                        if(count1 == arr.length){
+                                            break;
+                                        }
+                                    }
+                                    else{
+                                        finalarr += arr2[count2]
+                                        finalarr += '\n'
+                                        count2++
+                                        if(count2 == arr2.length){
+                                            break;
+                                        }
+                                    }
+                                }
+        
+                                while(count1 < arr.length){
+                                    finalarr += arr[count1]
+                                    finalarr += '\n'
+                                    count1++
+                                }
+                            
+                            
+                                while(count2 < arr2.length){
+                                    finalarr += arr2[count2]
+                                    finalarr += '\n'
+                                    count2++
+                                }
+                               
+                              
+                                try {
+                                    fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), finalarr, async(err)=>{
+                                      
+                                        if(err){
+                                            console.log(err)
+                                        }
+                                        else{
+                                            console.log("saved")
+                                            res.download(path.join(__dirname, 'files', "output.csv"))
+                                        }
+                                    });
+                                    // file written successfully
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
+                            }
+                            
+                        })
+                    }
+                })
+               
+              
             }
             
             else{
@@ -107,8 +216,51 @@ app.get('/centralread', async(req,res)=>{
 app.get('/node2read', async(req,res)=>{
     connections.node2.connect((err)=>{
         if(err){
-            console.log(err);
-            //PUT ERROR
+            let headerString;
+            let header;
+            let arr="";
+            var query = "Select * from centraldata where year < 1980";
+           console.log("redirected")
+            connections.node1.query(query, async(err, result)=>{
+                if(err){
+
+                }
+                else{
+                    header = Object.keys(result[0]);
+                    headerString = header.join(",");
+                    arr += headerString;
+                    arr += "\n";
+                    let temp;
+                    
+            
+                    for (let i = 0; i < result.length; i++){
+                        temp = Object.values(result[i]);
+                        temp[1] = temp[1].replaceAll(',','');
+                        temp = temp.toString();
+                        temp += ',';
+                        arr += temp;
+                        arr += "\n";
+                        
+                    }     
+                    try {
+                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{
+                            
+                            if(err){
+                                console.log(err)
+                            }
+                            else{
+                                console.log("saved")
+                                res.download(path.join(__dirname, 'files', "output.csv"))
+                            }
+                        });
+                        // file written successfully
+                        } catch (err) {
+                        console.error(err);
+                        }
+                            
+                    
+                    }
+            })
             
         }
         else{
@@ -167,7 +319,51 @@ app.get('/node2read', async(req,res)=>{
 app.get('/node3read', async(req,res)=>{
     connections.node3.connect((err)=>{
         if(err){
-            console.log(err);
+            let headerString;
+            let header;
+            let arr="";
+            var query = "Select * from centraldata where year >= 1980";
+           console.log("redirected")
+            connections.node1.query(query, async(err, result)=>{
+                if(err){
+
+                }
+                else{
+                    header = Object.keys(result[0]);
+                    headerString = header.join(",");
+                    arr += headerString;
+                    arr += "\n";
+                    let temp;
+                    
+            
+                    for (let i = 0; i < result.length; i++){
+                        temp = Object.values(result[i]);
+                        temp[1] = temp[1].replaceAll(',','');
+                        temp = temp.toString();
+                        temp += ',';
+                        arr += temp;
+                        arr += "\n";
+                        
+                    }     
+                    try {
+                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{
+                            
+                            if(err){
+                                console.log(err)
+                            }
+                            else{
+                                console.log("saved")
+                                res.download(path.join(__dirname, 'files', "output.csv"))
+                            }
+                        });
+                        // file written successfully
+                        } catch (err) {
+                        console.error(err);
+                        }
+                            
+                    
+                    }
+            })
         }
         else{
             var query = "Select * from after1980";
