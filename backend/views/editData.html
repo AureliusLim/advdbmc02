@@ -82,6 +82,16 @@
             <H2>Edit Data form</H2>
         </header>
         <main>
+            <form>
+                <input type="radio" id="uncommittted" name="iso_level" value="Read Uncommittted" style="vertical-align: middle">
+                <label for="Read Uncommittted">Read Uncommittted</label><br>
+                <input type="radio" id="committted" name="iso_level" value="Read Committted" style="vertical-align: middle">
+                <label for="Read Committted">Read Committted</label><br>
+                <input type="radio" id="repeatable" name="iso_level" value="Read Repeatable" style="vertical-align: middle">
+                <label for="Read Repeatable">Read Repeatable</label>
+                <input type="radio" id="serializable" name="iso_level" value="Serializable" style="vertical-align: middle">
+                <label for="Serializable">Serializable</label>
+            </form> 
             <h3>Actions:</h3>
             <div class="forms">
                 <form id="insertform" method="POST" action="/connectionstatus">
