@@ -74,6 +74,27 @@
                 border-radius: 5px;
                 font-size: 16px;
             }   
+            
+            label{
+                font-size: 18px;
+                vertical-align: middle;
+                position: inherit;
+            }
+
+            input[type="radio"]{
+                vertical-align: middle;
+            }
+            
+            .isolation {
+                display: flex;
+                align-items: middle;
+                background-color: #F2F2F2;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                max-width: 1000px;
+                margin-right: 100px;
+            }
         </style>
     </head>
 
@@ -82,15 +103,27 @@
             <H2>Edit Data form</H2>
         </header>
         <main>
-            <form>
-                <input type="radio" id="uncommittted" name="iso_level" value="Read Uncommittted" style="vertical-align: middle">
-                <label for="Read Uncommittted">Read Uncommittted</label><br>
-                <input type="radio" id="committted" name="iso_level" value="Read Committted" style="vertical-align: middle">
-                <label for="Read Committted">Read Committted</label><br>
-                <input type="radio" id="repeatable" name="iso_level" value="Read Repeatable" style="vertical-align: middle">
+            <h4>Isolation Level</h4>
+            <form id = "isolation">
+                <div>
+                <label for="Read Uncommittted">Read Uncommittted</label>
+                <input type="radio" id="uncommittted" name="iso_level" value="Read Uncommittted">
+                </div>
+
+                <div>
+                <label for="Read Committted">Read Committted</label>
+                <input type="radio" id="committted" name="iso_level" value="Read Committted">
+                </div>
+
+                <div>
                 <label for="Read Repeatable">Read Repeatable</label>
-                <input type="radio" id="serializable" name="iso_level" value="Serializable" style="vertical-align: middle">
+                <input type="radio" id="repeatable" name="iso_level" value="Read Repeatable">
+                </div>
+                
+                <div>
                 <label for="Serializable">Serializable</label>
+                <input type="radio" id="serializable" name="iso_level" value="Serializable">
+                </div>
             </form> 
             <h3>Actions:</h3>
             <div class="forms">
