@@ -648,6 +648,57 @@ app.get('/node3insert', async(req, res)=>{
    
 })
 
+app.get('/centralmodify', async(req, res)=>{
+    // let movieName = req.cookies["movieName"]
+    // let movieYear = req.cookies["movieYear"]
+    // let movieGenre = req.cookies["movieGenre"]
+    // let director = req.cookies["director"]
+    // let actor1 = req.cookies["actor1"]
+    // let actor2 = req.cookies["actor2"]
+
+    let movieID = req.cookies["movieID"]
+
+    var movieName = req.cookies["movieName"]
+    var movieYear = req.cookies["movieYear"]
+    var movieGenre = req.cookies["movieGenre"]
+    var director = req.cookies["director"]
+    var actor1 = req.cookies["actor1"]
+    var actor2 = req.cookies["actor2"]
+
+    //test if good
+        var query = 'UPDATE centraldata SET name = "${movieName}", year = "${movieYear}", genre = "${movieGenre}", director_id = "${director}", actor1 = "${actor1}", actor2="${actor2}" WHERE movie_id = movieID';
+        // var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+        
+        // generate movieid     
+        var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+        connections.node1.query(query2, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{      
+                console.log(result[0]['movie_id'])
+            }
+        })
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        connections.node1.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log(result)
+
+                //no modify yet for them, copy paste if centralModify is good
+                if(Number(movieYear) <= 1980){                    
+                    res.redirect('/node2modify')
+                }
+                else{                    
+                    res.redirect('/node3modify')
+                }
+            }
+        })
+})
+
 app.listen(PORT, ()=>{
     console.log("Server is listening on Port 4000");
 });

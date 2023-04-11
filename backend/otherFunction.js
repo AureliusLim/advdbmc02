@@ -24,3 +24,41 @@ function before1980(){
   })
 }
 
+
+//for checking if online
+  let intervalCheck;
+
+  function startChecking(offlineNode){
+    if(!intervalCheck){
+      intervalCheck = setInterval(nodeChecker, 500,offlineNode)
+    }
+  }
+
+
+  function nodeChecker(offlineNode){
+    connections.node1.getConnection((err,connection)=>{
+      if(err)
+        console.log(err)
+      else{
+        console.log(offlineNode + " is back online!")
+
+        //initiate data recovery
+        //either use google cloud logs or insert all data from other nodes
+        if(offlineNode = "centralNode")
+        {
+
+        }
+        else if(offline = "node1")
+        {
+
+        }
+        else if(offline = "node2")
+        {
+          
+        }
+      }
+    })
+
+  }
+
+
