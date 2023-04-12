@@ -24,6 +24,9 @@ app.get('/',(req,res)=>{
     res.clearCookie("actor2", { httpOnly: true });
     res.sendFile(path.join(__dirname,'views/index.html'));
 })
+app.get('/editData', (req, res)=>{
+    res.sendFile(path.join(__dirname,'views/editData.html'))
+})
 
 app.get('/centralread', async(req,res)=>{
     let checker = false;
@@ -606,10 +609,82 @@ app.post('/connectionstatus', (req, res)=>{
     connections.node1.getConnection((err,connection)=>{
         if(err){
             //redirect to something else
-            console.log(err)
+            let checkCentral = setInterval(function(){
+                connections.node1.getConnection(async(err, connection)=>{
+                    if(err){
+                        console.log("down")
+                    }
+                    else{
+                        console.log("Central Server is now up!")
+                        clearInterval(checkCentral)
+                        //still need to wait a bit before fully operational
+                        //await new Promise(resolve => setTimeout(resolve, 20000));
+                        //res.redirect('/centralinsert') not allowed
+                        let movieName = req.cookies["movieName"]
+                        let movieYear = req.cookies["movieYear"]
+                        let movieGenre = req.cookies["movieGenre"]
+                        let director = req.cookies["director"]
+                        let actor1 = req.cookies["actor1"]
+                        let actor2 = req.cookies["actor2"]
+                    
+                        
+                        var generated_id;
+        
+                        var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+                        // generate movieid
+                        var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+                        
+                        try {
+                            fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
+                                if(err){
+                                    console.log(err)
+                                }
+                                else{
+                                    console.log("Transaction Logged")
+                                }
+                            });
+                            // file written successfully
+                        } catch (err) {
+                            console.error(err);
+                        }
+                        connections.node1.query(query2, (err, result)=>{
+                            if(err){
+                                console.log(err);
+                            }
+                            else{
+                            
+                                console.log(result[0]['movie_id'])
+                                generated_id = result[0]['movie_id'] + 1;
+                            }
+                        })
+                        //console.log("Delayed")
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        // add delay here so that have enough time to make node go offline
+                        connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                            if(err){
+                                console.log(err);
+                                //write to logs
+                                
+                            }
+                            else{
+                                console.log(result)
+                            }
+                        })
+                            
+                    
+                    }
+                })
+            }, 5000)
+            if(Number(req.cookies["movieYear"]) <= 1980){                    
+                res.redirect('/node2insert')
+            }
+            else{                    
+                res.redirect('/node3insert')
+            }
+            //console.log(err)
         }
         else{
-           
+            
             res.redirect('/centralinsert')
         }
     
@@ -626,13 +701,14 @@ app.get('/centralinsert', async(req, res)=>{
     let actor1 = req.cookies["actor1"]
     let actor2 = req.cookies["actor2"]
    
- 
+    console.log("CENTRALINSERT")
     var generated_id;
     connections.node1.getConnection(async(err,connection)=>{
         if(err){
 
         }
         else{
+            console.log("CENTRALINSERT2")
             var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
             // generate movieid
             var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
@@ -660,30 +736,21 @@ app.get('/centralinsert', async(req, res)=>{
                     generated_id = result[0]['movie_id'] + 1;
                 }
             })
-            console.log("Delayed")
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            //console.log("Delayed")
+            await new Promise(resolve => setTimeout(resolve, 500));
             // add delay here so that have enough time to make node go offline
             connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
                 if(err){
                     console.log(err);
                     //write to logs
-                    let checkCentral = setInterval(function(){
-                        connections.node1.getConnection((err, connection)=>{
-                            if(err){
-                                console.log("down")
-                            }
-                            else{
-                                console.log("Server is now up!")
-                                clearInterval(checkCentral)
-                            }
-                        })
-                    }, 500)
+                    
                 }
                 else{
                     console.log(result)
                     if(Number(movieYear) <= 1980){
                         
                         res.redirect('/node2insert')
+                        res.redirect('/centralinsert')
                     }
                     else{
                        
@@ -807,6 +874,7 @@ app.get('/node3insert', async(req, res)=>{
     })
    
 })
+
 
 app.post('/connectionstatusMod', (req, res)=>{
     res.cookie("movieID", req.body.movie_id,{httpOnly:true})
