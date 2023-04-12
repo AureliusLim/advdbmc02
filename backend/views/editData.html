@@ -96,6 +96,20 @@
                 margin-right: 100px;
             }
         </style>
+        <script>
+            function readUncommitted(){
+                window.location.href = "/readUncommitted";
+            }
+            function readCommitted(){
+                window.location.href = "/readCommitted";
+            }
+            function readRepeatable(){
+                window.location.href = "/readRepeatable";
+            }
+            function serializable(){
+                window.location.href = "/serializable";
+            }
+        </script>
     </head>
 
     <body>
@@ -107,22 +121,22 @@
             <form id = "isolation">
                 <div>
                 <label for="Read Uncommittted">Read Uncommittted</label>
-                <input type="radio" id="uncommittted" name="iso_level" value="Read Uncommittted">
+                <input type="radio" id="uncommittted" name="iso_level" value="Read Uncommittted" onchange="readUncommitted()">
                 </div>
 
                 <div>
                 <label for="Read Committted">Read Committted</label>
-                <input type="radio" id="committted" name="iso_level" value="Read Committted">
+                <input type="radio" id="committted" name="iso_level" value="Read Committted" onchange="readCommitted()">
                 </div>
 
                 <div>
                 <label for="Read Repeatable">Read Repeatable</label>
-                <input type="radio" id="repeatable" name="iso_level" value="Read Repeatable">
+                <input type="radio" id="repeatable" name="iso_level" value="Read Repeatable" onchange="readRepeatable()">
                 </div>
                 
                 <div>
                 <label for="Serializable">Serializable</label>
-                <input type="radio" id="serializable" name="iso_level" value="Serializable">
+                <input type="radio" id="serializable" name="iso_level" value="Serializable" onchange="serializable()">
                 </div>
             </form> 
             <h3>Actions:</h3>

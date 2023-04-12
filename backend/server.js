@@ -648,6 +648,95 @@ app.get('/node3insert', async(req, res)=>{
    
 })
 
+app.get('/readUncommitted', async(req, res)=>{
+    connections.node1.getConnection(async(err,connection)=>{
+        if(err){
+            console.log(err);
+        }
+        else{
+            var query = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;";
+
+            connection.node1.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("uncommitted")
+                    console.log(result)
+
+                }
+            })
+        }
+    })
+})
+
+app.get('/readCommitted', async(req, res)=>{
+    connections.node1.getConnection(async(err,connection)=>{
+        if(err){
+            console.log(err);
+        }
+        else{
+            var query = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;";
+
+            connection.node1.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("committed")
+                    console.log(result)
+
+                }
+            })
+        }
+    })
+})
+
+app.get('/readUncommitted', async(req, res)=>{
+    connections.node1.getConnection(async(err,connection)=>{
+        if(err){
+            console.log(err);
+        }
+        else{
+            var query = "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;";
+
+            connection.node1.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("repeatable")
+                    console.log(result)
+
+                }
+            })
+        }
+    })
+})
+
+app.get('/readUncommitted', async(req, res)=>{
+    connections.node1.getConnection(async(err,connection)=>{
+        if(err){
+            console.log(err);
+        }
+        else{
+            var query = "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;";
+
+            connection.node1.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("serializable")
+                    console.log(result)
+
+                }
+            })
+        }
+    })
+})
+
 app.listen(PORT, ()=>{
     console.log("Server is listening on Port 4000");
 });
+
