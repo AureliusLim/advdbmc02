@@ -26,17 +26,25 @@ app.get('/',(req,res)=>{
 })
 
 app.get('/centralread', async(req,res)=>{
-        connections.node1.getConnection((err,connection)=>{
-            if(err){
-                
-                // Put error message that server is down
-                let headerString;
+    let checker = false;
+    connections.node2.getConnection((err, connection)=>{
+        if(err){
+            checker = true;
+        }
+    })
+    connections.node3.getConnection((err, connection)=>{
+        if(err){
+            checker = true;
+        }
+    })
+    if(checker == true){ // slave nodes are up
+        let headerString;
                 let header;
                 let arr="";
                 let arr2="";
                 var query = "Select * from before1980";
                 var query1 = "Select * from after1980";
-                connection.query(query, async(err, result)=>{
+                connections.node2.query(query, async(err, result)=>{
                     if(err){
 
                     }
@@ -138,58 +146,53 @@ app.get('/centralread', async(req,res)=>{
                         })
                     }
                 })
-               
-              
+    }
+    else{
+        var query = "Select * from centraldata";
+        connections.node1.query(query, async(err, result)=>{
+            if(err){
+                console.log(err)
+            }
+            else{
+                var header = Object.keys(result[0]);
+                headerString = header.join(",");
+                var arr="";
+                arr += headerString;
+                arr += "\n";
+                var temp;
+                console.log("IN")
+        
+                for (let i = 0; i < result.length; i++){
+                    temp = Object.values(result[i]);
+                    temp[1] = temp[1].replaceAll(',','');
+                    temp = temp.toString();
+                    temp += ',';
+                    arr += temp;
+                    arr += "\n";
+                    //console.log(Object.values(result[i]).join(','))
+                }
+
+
+
+
+                try {
+                    fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
+                        if(err){
+                            console.log(err)
+                        }
+                        else{
+                            console.log("saved")
+                            res.download(path.join(__dirname, 'files', "output.csv"))
+                        }
+                    });
+                    // file written successfully
+                  } catch (err) {
+                    console.error(err);
+                  }
             }
             
-            else{
-                var query = "Select * from centraldata";
-                connections.node1.query(query, async(err, result)=>{
-                    if(err){
-                        console.log(err)
-                    }
-                    else{
-                        var header = Object.keys(result[0]);
-                        headerString = header.join(",");
-                        var arr="";
-                        arr += headerString;
-                        arr += "\n";
-                        var temp;
-                        console.log("IN")
-                
-                        for (let i = 0; i < result.length; i++){
-                            temp = Object.values(result[i]);
-                            temp[1] = temp[1].replaceAll(',','');
-                            temp = temp.toString();
-                            temp += ',';
-                            arr += temp;
-                            arr += "\n";
-                            //console.log(Object.values(result[i]).join(','))
-                        }
-    
-    
-    
-    
-                        try {
-                            fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
-                                if(err){
-                                    console.log(err)
-                                }
-                                else{
-                                    console.log("saved")
-                                    res.download(path.join(__dirname, 'files', "output.csv"))
-                                }
-                            });
-                            // file written successfully
-                          } catch (err) {
-                            console.error(err);
-                          }
-                    }
-                    
-                })
-                //res.sendFile(path.join(__dirname,'views/centralNode.html'));
-            }
         })
+    }
     
 })
 
@@ -623,11 +626,30 @@ app.get('/centralinsert', async(req, res)=>{
     let actor1 = req.cookies["actor1"]
     let actor2 = req.cookies["actor2"]
    
+ 
     var generated_id;
-   
+    connections.node1.getConnection(async(err,connection)=>{
+        if(err){
+
+        }
+        else{
             var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
             // generate movieid
             var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+            
+            try {
+                fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
+                    if(err){
+                        console.log(err)
+                    }
+                    else{
+                        console.log("Transaction Logged")
+                    }
+                });
+                // file written successfully
+              } catch (err) {
+                console.error(err);
+              }
             connections.node1.query(query2, (err, result)=>{
                 if(err){
                     console.log(err);
@@ -638,11 +660,24 @@ app.get('/centralinsert', async(req, res)=>{
                     generated_id = result[0]['movie_id'] + 1;
                 }
             })
-            await new Promise(resolve => setTimeout(resolve, 500));
-          
+            console.log("Delayed")
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            // add delay here so that have enough time to make node go offline
             connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
                 if(err){
                     console.log(err);
+                    //write to logs
+                    let checkCentral = setInterval(function(){
+                        connections.node1.getConnection((err, connection)=>{
+                            if(err){
+                                console.log("down")
+                            }
+                            else{
+                                console.log("Server is now up!")
+                                clearInterval(checkCentral)
+                            }
+                        })
+                    }, 500)
                 }
                 else{
                     console.log(result)
@@ -656,6 +691,8 @@ app.get('/centralinsert', async(req, res)=>{
                     }
                 }
             })
+        }
+    })
             
 })
 
@@ -674,6 +711,19 @@ app.get('/node2insert', async(req, res)=>{
         }
         else{
             var query = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+            try {
+                fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
+                    if(err){
+                        console.log(err)
+                    }
+                    else{
+                        console.log("Transaction Logged")
+                    }
+                });
+                // file written successfully
+              } catch (err) {
+                console.error(err);
+              }
             // generate movieid
             var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
             connections.node2.query(query2, async(err, result)=>{
@@ -717,6 +767,19 @@ app.get('/node3insert', async(req, res)=>{
         }
         else{
             var query = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+            try {
+                fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
+                    if(err){
+                        console.log(err)
+                    }
+                    else{
+                        console.log("Transaction Logged")
+                    }
+                });
+                // file written successfully
+              } catch (err) {
+                console.error(err);
+              }
             // generate movieid
             var query2 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
             connections.node3.query(query2, async(err, result)=>{
