@@ -7,7 +7,6 @@ const app = express();
 const cookieParser = require("cookie-parser")
 const fs = require('fs');
 
-
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended:false}));
@@ -604,52 +603,137 @@ app.post('/connectionstatus', (req, res)=>{
     res.cookie("director",req.body.director_id, {httpOnly:true})
     res.cookie("actor1", req.body.actor1, {httpOnly:true})
     res.cookie("actor2", req.body.actor2, {httpOnly:true})
+    
     console.log("inside connection");
-
+    let firstTime = true;
     connections.node1.getConnection((err,connection)=>{
         if(err){
-            //redirect to something else
+            //check connection of each node
+            let movieName = req.body.name
+            let movieYear = req.body.year
+            let movieGenre = req.body.genre
+            let director = req.body.director_id
+            let actor1 = req.body.actor1
+            let actor2 = req.body.actor2
             let checkCentral = setInterval(function(){
                 connections.node1.getConnection(async(err, connection)=>{
                     if(err){
                         console.log("central is down")
+                        // insert to slave logs and write to slave nodes
+                        if(firstTime == true){
+                            console.log(movieName)
+                            
+                            connections.node2.getConnection(async(err,connection)=>{
+                                if (!err){
+                                    console.log("START LOG 2")
+                                    var query = "INSERT INTO node2.logs (name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?)";
+                                
+                                    
+                                     connections.node2.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                                            if(err){
+                                                //console.log(err);
+                                            }
+                                            else{                        
+                                                console.log("logged in node2")
+                                            }
+                                        })
+
+                                    
+                                }
+                            })
+                            connections.node3.getConnection(async(err,connection)=>{
+                                if(!err){
+                                    console.log("START LOG 3")
+                                    var query = "INSERT INTO node3.logs (name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?)";
+                                
+                
+                                    connections.node3.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                                            if(err){
+                                                console.log(err);
+                                            }
+                                            else{                        
+                                                console.log("logged in node3")
+                                            }
+                                        })
+
+                                }
+                            })
+                            if(movieYear<1980){
+                                //write node2.before1980
+                                connections.node2.getConnection(async(err,connection)=>{
+                                    if (!err){
+                                        var query = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+                
+                                            // generate movieid
+                                            var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
+                                            connections.node2.query(query2, async(err, result)=>{
+                                                if(err){
+                                                    //console.log(err);
+                                                    
+                                                }
+                                                else{
+                                                
+                                                    console.log(result[0]['movie_id'])
+                                                    generated_id = result[0]['movie_id'] + 1;
+                                                }
+                                            })
+                                            await new Promise(resolve => setTimeout(resolve, 500));
+                                        
+                                            connections.node2.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                                                if(err){
+                                                    //console.log(err);
+                                                }
+                                                else{
+                                                    console.log(result)
+                                                }
+                                            })
+                                        }
+                                })
+                            }
+
+                            else{
+                                var query = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+                
+                                // generate movieid
+                                var query2 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
+                                connections.node3.query(query2, async(err, result)=>{
+                                    if(err){
+                                        //console.log(err);
+                                        redirect = false;
+                                        console.log("node3 down")
+                                    }
+                                    else{
+                                        console.log("node3 is up")
+                                        console.log(result[0]['movie_id'])
+                                        generated_id = result[0]['movie_id'] + 1;
+                                    }
+                                })
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            
+                                connections.node3.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                                    if(err){
+                                        //console.log(err);
+                                    }
+                                    else{
+                                        console.log(result)
+                                    }
+                                })
+                            }
+
+                           
+                            firstTime = false;
+                        }
+                       
+
                     }
                     else{
                         console.log("Central Server is now up!")
-                        clearInterval(checkCentral)
-                        //still need to wait a bit before fully operational
-                        //await new Promise(resolve => setTimeout(resolve, 20000));
-                        //res.redirect('/centralinsert') not allowed
-                        let movieName = req.cookies["movieName"]
-                        let movieYear = req.cookies["movieYear"]
-                        let movieGenre = req.cookies["movieGenre"]
-                        let director = req.cookies["director"]
-                        let actor1 = req.cookies["actor1"]
-                        let actor2 = req.cookies["actor2"]
-                    
-                        
-                        var generated_id;
-        
-                        var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
-                        // generate movieid
-                        var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
-                        
-                        try {
-                            fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
-                                if(err){
-                                    console.log(err)
-                                }
-                                else{
-                                    console.log("Transaction Logged")
-                                }
-                            });
-                            // file written successfully
-                        } catch (err) {
-                            console.error(err);
-                        }
-                        connections.node1.query(query2, (err, result)=>{
+                        var query1 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+            
+           
+                        connections.node1.query(query1, (err, result)=>{
                             if(err){
-                                console.log(err);
+                                //console.log(err);
                             }
                             else{
                             
@@ -657,30 +741,147 @@ app.post('/connectionstatus', (req, res)=>{
                                 generated_id = result[0]['movie_id'] + 1;
                             }
                         })
-                        //console.log("Delayed")
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                       
-                        connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
-                            if(err){
-                                console.log(err);
-                                //write to logs
+
+                        connections.node2.getConnection(async(err, connection)=>{
+                          if (!err){
+                            var resultquery = "SELECT * FROM node2.logs"
+                            // connections.node1.query('set autocommit = 0;set transaction isolation level Serializable;', (err, result)=>{
+                            //     if(err){
+                            //         console.log(err)
+                            //     }
+                            //     else{
+
+                            //     }
+                            // })
+                            //get result and copy into the offline node
+                            connections.node2.query(resultquery, (err, node2logs)=>{
+                                console.log(node2logs.length)
+                                let movieName;
+                                let movieYear;
+                                let movieGenre;
+                                let director;
+                                let actor1;
+                                let actor2;
+                                let temp;
+                                for(let index = 0; index < node2logs.length; index++){
+                                    temp = Object.values(node2logs[index])
+                                    movieName = temp[0];
+                                    console.log(movieName);
+                                    movieYear = temp[1];
+                                    movieGenre = temp[2];
+                                    director = temp[3];
+                                    actor1 = temp[4];
+                                    actor2 = temp[5];
+                                    var insertquery = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
                                 
-                            }
-                            else{
-                                console.log(result)
-                            }
+                                    
+                                    connections.node1.query(insertquery,[generated_id + index, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                           if(err){
+                                               console.log(err);
+                                           }
+                                           else{                        
+                                               console.log(result)
+                                           }
+                                       })
+                                }
+                                var resetQuery = "DELETE FROM node2.logs"
+                                connections.node2.query(resetQuery, (err, result)=>{
+                                    if (err){
+                                        console.log(err)
+                                    }
+                                    else{
+                                        
+                                    }
+                                })
+                                // connections.node1.query('commit;set autocommit = 1', (err, result)=>{
+                                //     if(err){
+                                //         console.log(err)
+                                //     }
+                                //     else{
+    
+                                //     }
+                                // })
+
+                            })
+                            //delete logs after copying
+                           
+                          }  
+                          else{
+                            connections.node3.getConnection(async(err, connection)=>{
+                                if (!err){
+                                  var query = "SELECT * FROM node3.logs"
+      
+                                  //get result and copy into the offline node
+
+                                  //delete logs after copying
+                                    var resetQuery = "DELETE FROM node3.logs"
+                                }  
+                              })
+                          }
                         })
+
+
+
+                        clearInterval(checkCentral)
+
+
+                        //query for table LOGS and use result for updating the down node
+
+
+
+
+                        //still need to wait a bit before fully operational
+                        //await new Promise(resolve => setTimeout(resolve, 20000));
+                        //res.redirect('/centralinsert') not allowed
+                        // let movieName = req.cookies["movieName"]
+                        // let movieYear = req.cookies["movieYear"]
+                        // let movieGenre = req.cookies["movieGenre"]
+                        // let director = req.cookies["director"]
+                        // let actor1 = req.cookies["actor1"]
+                        // let actor2 = req.cookies["actor2"]
+                    
+                        
+                        // var generated_id;
+        
+                        // var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+                        // // generate movieid
+                        // var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+                        
+                        
+                        // connections.node1.query(query2, (err, result)=>{
+                        //     if(err){
+                        //         console.log(err);
+                        //     }
+                        //     else{
+                            
+                        //         console.log(result[0]['movie_id'])
+                        //         generated_id = result[0]['movie_id'] + 1;
+                        //     }
+                        // })
+                        // //console.log("Delayed")
+                        // await new Promise(resolve => setTimeout(resolve, 500));
+                       
+                        // connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                        //     if(err){
+                        //         console.log(err);
+                        //         //write to logs
+                                
+                        //     }
+                        //     else{
+                        //         console.log(result)
+                        //     }
+                        // })
                             
                     
                     }
                 })
             }, 5000)
-            if(Number(req.cookies["movieYear"]) <= 1980){                    
-                res.redirect('/node2insert')
-            }
-            else{                    
-                res.redirect('/node3insert')
-            }
+            // if(Number(req.cookies["movieYear"]) <= 1980){                    
+            //     res.redirect('/node2insert')
+            // }
+            // else{                    
+            //     res.redirect('/node3insert')
+            // }
             //console.log(err)
         }
         else{
@@ -712,19 +913,7 @@ app.get('/centralinsert', async(req, res)=>{
             // generate movieid
             var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
             
-            try {
-                fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
-                    if(err){
-                        console.log(err)
-                    }
-                    else{
-                        console.log("Transaction Logged")
-                    }
-                });
-                // file written successfully
-              } catch (err) {
-                console.error(err);
-              }
+           
             connections.node1.query(query2, (err, result)=>{
                 if(err){
                     //console.log(err);
@@ -783,19 +972,7 @@ app.get('/node2insert', async(req, res)=>{
                 console.log('Node2 is up')
                 clearInterval(checkNode2)
                 var query = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
-                try {
-                    fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
-                        if(err){
-                            console.log(err)
-                        }
-                        else{
-                            console.log("Transaction Logged")
-                        }
-                    });
-                    // file written successfully
-                } catch (err) {
-                    console.error(err);
-                }
+                
                 // generate movieid
                 var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
                 connections.node2.query(query2, async(err, result)=>{
@@ -848,19 +1025,7 @@ app.get('/node3insert', async(req, res)=>{
                 console.log('node3 is up')
                 clearInterval(checkNode3)
                 var query = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
-                try {
-                    fs.appendFile(path.resolve(__dirname, 'files', "logs.txt"), query + "\n", (err)=>{
-                        if(err){
-                            console.log(err)
-                        }
-                        else{
-                            console.log("Transaction Logged")
-                        }
-                    });
-                    // file written successfully
-                } catch (err) {
-                    console.error(err);
-                }
+                
                 // generate movieid
                 var query2 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
                 connections.node3.query(query2, async(err, result)=>{

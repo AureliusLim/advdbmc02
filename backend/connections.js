@@ -23,30 +23,8 @@ const node3 = mysql.createPool({
     password: 'node3',
     database: 'node3'
 })
-const nodeChecker = function(offlineNode){
-    offlineNode.getConnection((err,connection)=>{
-      if(err)
-        console.log(err)
-      else{
-        console.log("Server is back online!")
-        //initiate data recovery
-        //either use google cloud logs or insert all data from other nodes
-        if(offlineNode = "centralNode")
-        {
 
-        }
-        else if(offline = "node1")
-        {
 
-        }
-        else if(offline = "node2")
-        {
-          
-        }
-      }
-    })
-
-  }
   
 exports.node1 = node1;
 exports.node2 = node2;
