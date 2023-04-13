@@ -655,15 +655,27 @@ app.get('/readUncommitted', async(req, res)=>{
         }
         else{
             var query = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;";
-
-            connection.node1.query(query, async(err, result)=>{
+            
+            var query2 = "SET autocommit = 0";
+            connections.node1.query(query, async(err, result)=>{
                 if(err){
                     console.log(err);
                 }
                 else{
                     console.log("uncommitted")
                     console.log(result)
+                }
+            })
 
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            connections.node1.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    console.log(result)
                 }
             })
         }
@@ -677,7 +689,7 @@ app.get('/readCommitted', async(req, res)=>{
         }
         else{
             var query = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;";
-
+            var query2 = "SET autocommit = 0";
             connection.node1.query(query, async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -686,6 +698,18 @@ app.get('/readCommitted', async(req, res)=>{
                     console.log("committed")
                     console.log(result)
 
+                }
+            })
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            connections.node1.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    console.log(result)
                 }
             })
         }
@@ -699,7 +723,7 @@ app.get('/readUncommitted', async(req, res)=>{
         }
         else{
             var query = "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;";
-
+            var query2 = "SET autocommit = 0";
             connection.node1.query(query, async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -708,6 +732,17 @@ app.get('/readUncommitted', async(req, res)=>{
                     console.log("repeatable")
                     console.log(result)
 
+                }
+            })
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            connections.node1.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    console.log(result)
                 }
             })
         }
@@ -721,7 +756,7 @@ app.get('/readUncommitted', async(req, res)=>{
         }
         else{
             var query = "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;";
-
+            var query2 = "SET autocommit = 0";
             connection.node1.query(query, async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -730,6 +765,17 @@ app.get('/readUncommitted', async(req, res)=>{
                     console.log("serializable")
                     console.log(result)
 
+                }
+            })
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            connections.node1.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    console.log(result)
                 }
             })
         }
