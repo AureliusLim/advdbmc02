@@ -670,7 +670,7 @@ app.post('/connectionstatus', (req, res)=>{
                 
                                             // generate movieid
                                             var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
-                                            connections.node2.query(query2, async(err, result)=>{
+                                            connections.node2.query(query2, (err, result)=>{
                                                 if(err){
                                                     //console.log(err);
                                                     
@@ -683,7 +683,7 @@ app.post('/connectionstatus', (req, res)=>{
                                             })
 
                                             var query3 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
-                                            connections.node3.query(query3, async(err, result)=>{
+                                            connections.node3.query(query3, (err, result)=>{
                                                 if(err){
                                                     //console.log(err);
                                                     
@@ -721,7 +721,7 @@ app.post('/connectionstatus', (req, res)=>{
                                 let highestnode3;
                                 // generate movieid
                                 var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
-                                connections.node3.query(query2, async(err, result)=>{
+                                connections.node2.query(query2, (err, result)=>{
                                     if(err){
                                         //console.log(err);
                                         
@@ -734,7 +734,7 @@ app.post('/connectionstatus', (req, res)=>{
                                     }
                                 })
                                 var query3 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
-                                connections.node3.query(query3, async(err, result)=>{
+                                connections.node3.query(query3, (err, result)=>{
                                     if(err){
                                         //console.log(err);
                                         
