@@ -435,7 +435,7 @@ app.get('/centraldelete', async(req, res)=>{
         else{
             var query = "DELETE FROM centraldata WHERE movie_id = \'" + movie + "\'";
             var query2 = "DO SLEEP(10);";
-
+            var query3 = "COMMIT;";
             connections.node1.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -450,6 +450,14 @@ app.get('/centraldelete', async(req, res)=>{
             }
             else{
                 console.log("DO SLEEP(10)");
+            }})
+
+            connections.node1.query(query3, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("COMMIT");
             }})
         }
     })
@@ -466,7 +474,7 @@ app.get('/node2delete', async(req, res)=>{
         else{
             var query = "DELETE FROM before1980 WHERE movie_id = \'" + movie + "\'";
             var query2 = "DO SLEEP(10);";
-
+            var query3 = "COMMIT;";
             connections.node2.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -481,6 +489,14 @@ app.get('/node2delete', async(req, res)=>{
             }
             else{
                 console.log("DO SLEEP(10)");
+            }})
+
+            connections.node1.query(query3, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("COMMIT");
             }})
         }
     })
@@ -497,7 +513,7 @@ app.get('/node3delete', async(req, res)=>{
         else{
             var query = "DELETE FROM after1980 WHERE movie_id = \'" + movie + "\'";
             var query2 = "DO SLEEP(10);";
-
+            var query3 = "COMMIT;";
             connections.node3.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -513,9 +529,15 @@ app.get('/node3delete', async(req, res)=>{
             else{
                 console.log("DO SLEEP(10)");
             }})
+
+            connections.node1.query(query3, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("COMMIT");
+            }})
         }
-        
-       
     })
 })
 
@@ -557,6 +579,8 @@ app.get('/centralinsert', async(req, res)=>{
             var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
 
             var query3 = "DO SLEEP(10);";
+
+            var query4 = "COMMIT;";
             connections.node1.query(query2, (err, result)=>{
                 if(err){
                     console.log(err);
@@ -594,6 +618,13 @@ app.get('/centralinsert', async(req, res)=>{
                 console.log("DO SLEEP(10)");
             }})
             
+            connections.node1.query(query4, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("COMMIT");
+            }})
 })
 
 app.get('/node2insert', async(req, res)=>{
@@ -615,6 +646,8 @@ app.get('/node2insert', async(req, res)=>{
             var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
 
             var query3 = "DO SLEEP(10);";
+
+            var query4 = "COMMIT;";
             connections.node2.query(query2, async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -645,6 +678,14 @@ app.get('/node2insert', async(req, res)=>{
             else{
                 console.log("DO SLEEP(10)");
             }})
+
+            connections.node1.query(query4, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("COMMIT");
+            }})
         }
     })
     
@@ -668,6 +709,8 @@ app.get('/node3insert', async(req, res)=>{
             var query2 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
 
             var query3 = "DO SLEEP(10);";
+
+            var query4 = "COMMIT;";
             connections.node3.query(query2, async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -696,6 +739,14 @@ app.get('/node3insert', async(req, res)=>{
             }
             else{
                 console.log("DO SLEEP(10)");
+            }})
+
+            connections.node1.query(query4, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("COMMIT");
             }})
         }
     })
@@ -733,6 +784,7 @@ app.get('/readUncommitted', async(req, res)=>{
                     // console.log(result)
                 }
             })
+            
         }
     })
 
