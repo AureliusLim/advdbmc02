@@ -323,6 +323,7 @@ app.get('/node2read', async(req,res)=>{
     })
    
 })
+
 app.get('/node3read', async(req,res)=>{
     connections.node3.getConnection((err,connection)=>{
         if(err){
@@ -422,6 +423,7 @@ app.get('/node3read', async(req,res)=>{
     })
     
 })
+
 app.get('/centraldelete', async(req, res)=>{
     movie = req.body.movie_id;
     //testing
@@ -432,19 +434,27 @@ app.get('/centraldelete', async(req, res)=>{
         }
         else{
             var query = "DELETE FROM centraldata WHERE movie_id = \'" + movie + "\'";
+            var query2 = "DO SLEEP(10);";
+
             connections.node1.query(query, (err, result)=>{
             if(err){
                 console.log(err);
             }
             else{
                 console.log("Record Deleted: ", result);
+            }})
+
+            connections.node1.query(query2, (err, result)=>{
+            if(err){
+                console.log(err);
             }
-        })
+            else{
+                console.log("DO SLEEP(10)");
+            }})
         }
-        
-       
     })
 })
+
 app.get('/node2delete', async(req, res)=>{
     movie = req.body.movie_id;
     // testing
@@ -455,19 +465,27 @@ app.get('/node2delete', async(req, res)=>{
         }
         else{
             var query = "DELETE FROM before1980 WHERE movie_id = \'" + movie + "\'";
+            var query2 = "DO SLEEP(10);";
+
             connections.node2.query(query, (err, result)=>{
             if(err){
                 console.log(err);
             }
             else{
                 console.log("Record Deleted: ", result);
+            }})
+
+            connections.node2.query(query2, (err, result)=>{
+            if(err){
+                console.log(err);
             }
-        })
+            else{
+                console.log("DO SLEEP(10)");
+            }})
         }
-        
-       
     })
 })
+
 app.get('/node3delete', async(req, res)=>{
     movie = req.body.movie_id;
     // testing
@@ -478,19 +496,29 @@ app.get('/node3delete', async(req, res)=>{
         }
         else{
             var query = "DELETE FROM after1980 WHERE movie_id = \'" + movie + "\'";
+            var query2 = "DO SLEEP(10);";
+
             connections.node3.query(query, (err, result)=>{
             if(err){
                 console.log(err);
             }
             else{
                 console.log("Record Deleted: ", result);
+            }})
+
+            connections.node2.query(query2, (err, result)=>{
+            if(err){
+                console.log(err);
             }
-        })
+            else{
+                console.log("DO SLEEP(10)");
+            }})
         }
         
        
     })
 })
+
 app.post('/connectionstatus', (req, res)=>{
     res.cookie("movieName", req.body.name,{httpOnly:true})
     res.cookie("movieYear", req.body.year, {httpOnly:true})
@@ -522,15 +550,13 @@ app.get('/centralinsert', async(req, res)=>{
     let director = req.cookies["director"]
     let actor1 = req.cookies["actor1"]
     let actor2 = req.cookies["actor2"]
-   
-   
-
-   
     var generated_id;
    
             var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
             // generate movieid
             var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+
+            var query3 = "DO SLEEP(10);";
             connections.node1.query(query2, (err, result)=>{
                 if(err){
                     console.log(err);
@@ -559,6 +585,14 @@ app.get('/centralinsert', async(req, res)=>{
                     }
                 }
             })
+
+            connections.node1.query(query3, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("DO SLEEP(10)");
+            }})
             
 })
 
@@ -579,6 +613,8 @@ app.get('/node2insert', async(req, res)=>{
             var query = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
             // generate movieid
             var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
+
+            var query3 = "DO SLEEP(10);";
             connections.node2.query(query2, async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -601,6 +637,14 @@ app.get('/node2insert', async(req, res)=>{
                     console.log(result)
                 }
             })
+
+            connections.node2.query(query3, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("DO SLEEP(10)");
+            }})
         }
     })
     
@@ -622,6 +666,8 @@ app.get('/node3insert', async(req, res)=>{
             var query = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
             // generate movieid
             var query2 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
+
+            var query3 = "DO SLEEP(10);";
             connections.node3.query(query2, async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -643,6 +689,14 @@ app.get('/node3insert', async(req, res)=>{
                     console.log(result)
                 }
             })
+
+            connections.node3.query(query3, (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("DO SLEEP(10)");
+            }})
         }
     })
    
