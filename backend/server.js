@@ -651,19 +651,20 @@ app.get('/node3insert', async(req, res)=>{
 app.get('/readUncommitted', async(req, res)=>{
     connections.node1.getConnection(async(err,connection)=>{
         if(err){
+            console.log("not connected")
             console.log(err);
         }
         else{
-            var query = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;";
+            var query = "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;";
             
-            var query2 = "SET autocommit = 0";
-            connections.node1.query(query, async(err, result)=>{
+            var query2 = "SET autocommit = 0;";
+            connections.node1.query(query, (err, result)=>{
                 if(err){
                     console.log(err);
                 }
                 else{
                     console.log("uncommitted")
-                    console.log(result)
+                    // console.log(result)
                 }
             })
 
@@ -675,11 +676,13 @@ app.get('/readUncommitted', async(req, res)=>{
                 }
                 else{
                     console.log("autocommit = 0")
-                    console.log(result)
+                    // console.log(result)
                 }
             })
         }
     })
+
+    res.redirect("/editData")
 })
 
 app.get('/readCommitted', async(req, res)=>{
@@ -688,15 +691,15 @@ app.get('/readCommitted', async(req, res)=>{
             console.log(err);
         }
         else{
-            var query = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;";
+            var query = "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;";
             var query2 = "SET autocommit = 0";
-            connection.node1.query(query, async(err, result)=>{
+            connections.node1.query(query, async(err, result)=>{
                 if(err){
                     console.log(err);
                 }
                 else{
                     console.log("committed")
-                    console.log(result)
+                    // console.log(result)
 
                 }
             })
@@ -709,28 +712,29 @@ app.get('/readCommitted', async(req, res)=>{
                 }
                 else{
                     console.log("autocommit = 0")
-                    console.log(result)
+                    // console.log(result)
                 }
             })
         }
     })
+    res.redirect("/editData")
 })
 
-app.get('/readUncommitted', async(req, res)=>{
+app.get('/readRepeatable', async(req, res)=>{
     connections.node1.getConnection(async(err,connection)=>{
         if(err){
             console.log(err);
         }
         else{
-            var query = "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;";
+            var query = "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;";
             var query2 = "SET autocommit = 0";
-            connection.node1.query(query, async(err, result)=>{
+            connections.node1.query(query, async(err, result)=>{
                 if(err){
                     console.log(err);
                 }
                 else{
                     console.log("repeatable")
-                    console.log(result)
+                    // console.log(result)
 
                 }
             })
@@ -742,28 +746,29 @@ app.get('/readUncommitted', async(req, res)=>{
                 }
                 else{
                     console.log("autocommit = 0")
-                    console.log(result)
+                    // console.log(result)
                 }
             })
         }
     })
+    res.redirect("/editData")
 })
 
-app.get('/readUncommitted', async(req, res)=>{
+app.get('/serializable', async(req, res)=>{
     connections.node1.getConnection(async(err,connection)=>{
         if(err){
             console.log(err);
         }
         else{
-            var query = "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;";
+            var query = "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;";
             var query2 = "SET autocommit = 0";
-            connection.node1.query(query, async(err, result)=>{
+            connections.node1.query(query, async(err, result)=>{
                 if(err){
                     console.log(err);
                 }
                 else{
                     console.log("serializable")
-                    console.log(result)
+                    // console.log(result)
 
                 }
             })
@@ -775,11 +780,12 @@ app.get('/readUncommitted', async(req, res)=>{
                 }
                 else{
                     console.log("autocommit = 0")
-                    console.log(result)
+                    // console.log(result)
                 }
             })
         }
     })
+    res.redirect("/editData")
 })
 
 app.listen(PORT, ()=>{

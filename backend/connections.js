@@ -2,7 +2,7 @@ const mysql = require('mysql')
 
 const node1 = mysql.createPool({
     connectionLimit : 100,
-    host: '34.92.14.182',
+    host: '34.92.173.14',
     user: 'root',
     password: 'centralnode',
     database: 'central'
@@ -10,7 +10,7 @@ const node1 = mysql.createPool({
 
 const node2 = mysql.createPool({
     connectionLimit : 100,
-    host: '34.92.141.140',
+    host: '34.92.157.106',
     user: 'root',
     password: 'node2',
     database: 'node2'
@@ -18,7 +18,7 @@ const node2 = mysql.createPool({
 
 const node3 = mysql.createPool({
     connectionLimit : 100,
-    host: '34.92.211.126',
+    host: '34.92.38.8',
     user: 'root',
     password: 'node3',
     database: 'node3'
