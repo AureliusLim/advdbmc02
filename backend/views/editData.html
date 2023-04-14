@@ -160,19 +160,43 @@
 
                     <label for="actor2">Movie Actor 2:</label>
                     <input type="text" id="actor2" name="actor2"><br>
-                    <a href="javascript:{}" onclick="document.getElementById('insertform').submit();">Insert Data</a>
+
+                    
+                    <input type="submit" id="action" name="action" value="Insert Data"/>
+
                 </form>
-                <form>
+                <form id="modifyform" action="/connectionstatus" method="POST">
                     <!-- check if exist  -->
                     <label for="movie_id">Movie ID:</label>
                         <input type="text" id="movie_id" name="movie_id"><br>
-                        <a href="/modData">Modify Data</a><br><br>
+                        <label for="name">Movie Name:</label>
+                        <input type="text" id="name" name="name"><br>
+                        
+                        <label for="year">Movie Release Year:</label>
+                        <input type="text" id="year" name="year"><br>
+    
+                        <label for="genre">Movie Genre:</label>
+                        <input type="text" id="genre" name="genre"><br>
+    
+                        <label for="director_id">Movie Director ID:</label>
+                        <input type="text" id="director_id" name="director_id"><br>
+    
+                        <label for="actor1">Movie Actor 1:</label>
+                        <input type="text" id="actor1" name="actor1"><br>
+    
+                        <label for="actor2">Movie Actor 2:</label>
+                        <input type="text" id="actor2" name="actor2"><br>
+
+                        <input type="submit" id="action" name="action" value="Modify Data"/>
+                        
                 </form>
-                <form>
+                <form id="deleteform" action="/connectionstatus">
                     <!-- check if exist -->
                     <label for="movie_id">Movie ID:</label>
                         <input type="text" id="movie_id" name="movie_id"><br>
-                        <a href="/delData">Delete Data</a><br><br>
+
+                        <input type="submit" id="action" name="action" value="Delete Data"/>
+                        
                 </form>
             </div>
         </main>

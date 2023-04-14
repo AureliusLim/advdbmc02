@@ -10,7 +10,7 @@ const node1 = mysql.createPool({
 
 const node2 = mysql.createPool({
     connectionLimit : 100,
-    host: '34.92.157.106',
+    host: '34.96.157.106',
     user: 'root',
     password: 'node2',
     database: 'node2'
@@ -24,6 +24,8 @@ const node3 = mysql.createPool({
     database: 'node3'
 })
 
+
+  
 exports.node1 = node1;
 exports.node2 = node2;
 exports.node3 = node3;
