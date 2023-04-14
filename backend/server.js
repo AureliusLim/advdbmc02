@@ -901,6 +901,7 @@ app.post('/connectionstatus', (req, res)=>{
             }, 5000)
         
         }
+        else{
 
                         //query for table LOGS and use result for updating the down node
 
@@ -1347,7 +1348,7 @@ app.get('/node3insert', async(req, res)=>{
             }
                 
         })
-    
+    })
    
 })
 
