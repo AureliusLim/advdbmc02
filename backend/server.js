@@ -597,6 +597,7 @@ app.get('/node3delete', async(req, res)=>{
     })
 })
 app.post('/connectionstatus', (req, res)=>{
+    res.cookie("movieID", req.body.movie_id,{httpOnly:true})
     res.cookie("movieName", req.body.name,{httpOnly:true})
     res.cookie("movieYear", req.body.year, {httpOnly:true})
     res.cookie("movieGenre", req.body.genre, {httpOnly:true})
@@ -606,6 +607,13 @@ app.post('/connectionstatus', (req, res)=>{
     console.log(req.body.action)
     console.log("inside connection");
     let firstTime = true;
+    let movieName = req.body.name
+    let movieYear = req.body.year
+    let movieGenre = req.body.genre
+    let director = req.body.director_id
+    let actor1 = req.body.actor1
+    let actor2 = req.body.actor2
+    let action = req.body.action
     connections.node1.getConnection((err,connection)=>{
         if(err){
             //check connection of each node
@@ -1133,7 +1141,7 @@ app.post('/connectionstatus', (req, res)=>{
                 res.redirect('/centralinsert')
             }
             else if(req.body.action == "Modify Data"){
-                res.redirect('/')
+                res.redirect('/centralmodify')
             }
                 
         }
@@ -1289,12 +1297,12 @@ app.get('/node3insert', async(req, res)=>{
     let checkNode3 = setInterval(function(){
             connections.node3.getConnection(async(err,connection)=>{
             if(err){
-                console.log('node2 is down');
+                console.log('node3 is down');
                 redirect = false;
             }
             else{
                 console.log('node3 is up')
-               
+                clearInterval(checkNode3)
                 if (redirect == true){
                     var query = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
                 
@@ -1348,7 +1356,7 @@ app.get('/node3insert', async(req, res)=>{
             }
                 
         })
-    })
+    },5000)
    
 })
 
