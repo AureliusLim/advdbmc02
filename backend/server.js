@@ -531,16 +531,39 @@ app.get('/node3read', async(req,res)=>{
 
 app.get('/centraldelete', async(req, res)=>{
     movie = req.body.movie_id;
-    //testing
-    //movie = '2'
+    let movieYear;
+    let temp;
+    //oppai9
+    //need to get the movieYear thats deleted
     connections.node1.getConnection((err,connection)=>{
         if(err){
             console.log(err);
         }
         else{
+            var getYear = "SELECT * FROM centraldata WHERE movie_id =" + movie;
+            connections.node1.query(getYear,[movie], (err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{       
+                temp = Object.values(node2logs[0])
+                movieYear = temp[1];
+                console.log(movieYear)
+            }})
+
             var query = "DELETE FROM centraldata WHERE movie_id = \'" + movie + "\'";
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
+
+            connections.node1.query(query3, (err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("COMMIT (getYear)");
+                }
+            })
+            
             connections.node1.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -564,14 +587,19 @@ app.get('/centraldelete', async(req, res)=>{
             else{
                 console.log("COMMIT");
             }})
+
+            if(Number(movieYear) < 1980){                       
+                res.redirect('/node2delete')               
+            }
+            else{            
+                res.redirect('/node3delete')
+            }
         }
     })
 })
 
 app.get('/node2delete', async(req, res)=>{
     movie = req.body.movie_id;
-    // testing
-    //movie = '5'; 
     connections.node2.getConnection((err,connection)=>{
         if(err){
             console.log(err);
@@ -609,8 +637,6 @@ app.get('/node2delete', async(req, res)=>{
 
 app.get('/node3delete', async(req, res)=>{
     movie = req.body.movie_id;
-    // testing
-    //movie = '15'; 
     connections.node3.getConnection((err,connection)=>{
         if(err){
             console.log(err);
@@ -953,6 +979,7 @@ app.post('/connectionstatus', (req, res)=>{
                                 let director;
                                 let actor1;
                                 let actor2;
+                                let movieID;
                                 let temp;
                                 for(let index = 0; index < node2logs.length; index++){
                                     temp = Object.values(node2logs[index])
@@ -963,11 +990,11 @@ app.post('/connectionstatus', (req, res)=>{
                                     director = temp[3];
                                     actor1 = temp[4];
                                     actor2 = temp[5];
-                                    movie_id = temp[6];
+                                    movieID = temp[6];
                                   
                                     //oppai,  search this
                                     //insert log
-                                    if(movieName !== null && movie_id == null)
+                                    if(movieName !== null && movieID == null)
                                     {
                                         var insertquery = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
                                 
@@ -987,7 +1014,7 @@ app.post('/connectionstatus', (req, res)=>{
                                     {
                                         var editquery = "UPDATE centraldata SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
 
-                                        connections.node1.query(editquery,[movie_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                        connections.node1.query(editquery,[movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                                             if(err){
                                                 console.log(err);
                                             }
@@ -1000,8 +1027,8 @@ app.post('/connectionstatus', (req, res)=>{
                                     
                                     else if(movieName == null && movie_id !== null)
                                     {
-                                        var deletequery = "DELETE FROM centraldata WHERE movie_id = " + movie_id;
-                                        connections.node1.query(deletequery,[movie_id], (err, result)=>{
+                                        var deletequery = "DELETE FROM centraldata WHERE movie_id = " + movieID;
+                                        connections.node1.query(deletequery,[movieID], (err, result)=>{
                                             if(err){
                                                 console.log(err);
                                             }
@@ -1048,21 +1075,48 @@ app.post('/connectionstatus', (req, res)=>{
                         connections.node2.getConnection(async(err, connection)=>{
                             if(err){
                                 console.log("node2 down")
-                                if(firstTime == true){
-                                    
+                                //oppai5
+                                if(firstTime == true){                                    
                                     connections.node1.getConnection(async(err,connection)=>{
                                         if (!err){
                                             console.log("START LOG in Central")
-                                            var query = "INSERT INTO central.logs (name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?)";
+                                            if(action == "Insert Data"){
+                                                var query = "INSERT INTO central.logs (name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?)";
                                                                         
-                                            connections.node1.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
-                                                if(err){
-                                                    console.log(err);
-                                                }
-                                                else{                        
-                                                    console.log("logged in central")
-                                                }
-                                            })                        
+                                                connections.node1.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                                                    if(err){
+                                                        console.log(err);
+                                                    }
+                                                    else{                        
+                                                        console.log("logged in central")
+                                                    }
+                                                })     
+                                            }
+                                            else if(action == "Modify Data"){
+                                                var query = "INSERT INTO central.logs (name, year, genre, director_id, actor1, actor2, movie_id) VALUES(?,?,?,?,?,?,?)";
+                                                            
+                                                connections.node1.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2, movieID], async(err, result)=>{
+                                                    if(err){
+                                                        console.log(err);
+                                                    }
+                                                    else{                        
+                                                        console.log("logged in central")
+                                                    }
+                                                })         
+                                            }
+                                            else if(action == "Delete Data"){
+                                                var query = "INSERT INTO central.logs (movie_id) VALUES(?)";
+                                                            
+                                                connections.node1.query(query,[movieID], async(err, result)=>{
+                                                    if(err){
+                                                        console.log(err);
+                                                    }
+                                                    else{                        
+                                                        console.log("logged in central")
+                                                    }
+                                                })         
+                                            }
+                                                               
                                         }
                                     })
                                     
@@ -1073,7 +1127,7 @@ app.post('/connectionstatus', (req, res)=>{
                                 console.log("node2 is now up")
                                 var query1 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
                                 let generated_id;
-           
+                                
                                 connections.node1.query(query1, (err, result)=>{
                                     if(err){
                                         console.log(err);
@@ -1086,6 +1140,7 @@ app.post('/connectionstatus', (req, res)=>{
                                 })
                                 await new Promise(resolve => setTimeout(resolve, 500));
                                 connections.node1.getConnection(async(err, connection)=>{
+                                    //oppai6
                                     if (!err){
                                         var resultquery = "SELECT * FROM central.logs"
                                     
@@ -1098,6 +1153,7 @@ app.post('/connectionstatus', (req, res)=>{
                                             let actor1;
                                             let actor2;
                                             let temp;
+                                            let movieID;
                                             for(let index = 0; index < node1logs.length; index++){
                                                 temp = Object.values(node1logs[index])
                                                 movieName = temp[0];
@@ -1107,17 +1163,45 @@ app.post('/connectionstatus', (req, res)=>{
                                                 director = temp[3];
                                                 actor1 = temp[4];
                                                 actor2 = temp[5];
-                                                var insertquery = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
-                                            
-                                                
-                                                connections.node2.query(insertquery,[generated_id + index, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
-                                                    if(err){
-                                                        console.log(err);
-                                                    }
-                                                    else{                        
-                                                        console.log(result)
-                                                    }
-                                                })
+                                                movieID = temp[6];
+                                                if(movieYear < 1980){
+                                                    if(movieName !== null && movieID == null){
+                                                        var insertquery = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";                                                                                        
+                                                        connections.node2.query(insertquery,[generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                                            if(err){
+                                                                console.log(err);
+                                                            }
+                                                            else{                        
+                                                                console.log(result)
+                                                                generated_id+=1
+                                                            }
+                                                        })
+                                                    }   
+                                                    else if(movieName !== null && movieID !== null){                                                                  
+                                                        var modifyquery = "UPDATE before1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
+    
+                                                        connections.node2.query(modifyquery,[movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                                            if(err){
+                                                                console.log(err);
+                                                            }
+                                                            else{                        
+                                                                console.log(result)
+                                                            }
+                                                        })
+                                                    }     
+                                                    
+                                                    else if(movieName == null && movieID !== null){                                                                                                                        
+                                                        var deletequery = "DELETE FROM before1980 WHERE movie_id = " + movieID;
+                                                        connections.node2.query(deletequery,[movieID], (err, result)=>{
+                                                            if(err){
+                                                                console.log(err);
+                                                            }
+                                                            else{                        
+                                                                console.log(result)
+                                                            }
+                                                        })
+                                                    }  
+                                                }                                               
                                             }
                                             var resetQuery = "DELETE FROM central.logs"
                                             connections.node1.query(resetQuery, (err, result)=>{
@@ -1146,21 +1230,47 @@ app.post('/connectionstatus', (req, res)=>{
                             connections.node3.getConnection(async(err, connection)=>{
                                 if(err){
                                     console.log("node3 down")
-                                    if(firstTime == true){
-                                        
+                                    //oppai7
+                                    if(firstTime == true){                                      
                                         connections.node1.getConnection(async(err,connection)=>{
                                             if (!err){
                                                 console.log("START LOG in Central")
-                                                var query = "INSERT INTO central.logs (name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?)";
+                                                if(action == "Insert Data"){
+                                                    var query = "INSERT INTO central.logs (name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?)";
                                                                             
-                                                connections.node1.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
-                                                    if(err){
-                                                        console.log(err);
-                                                    }
-                                                    else{                        
-                                                        console.log("logged in central")
-                                                    }
-                                                })                        
+                                                    connections.node1.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                                                        if(err){
+                                                            console.log(err);
+                                                        }
+                                                        else{                        
+                                                            console.log("logged in central")
+                                                        }
+                                                    })       
+                                                }                                               
+                                                else if(action == "Modify Data"){
+                                                    var query = "INSERT INTO central.logs (name, year, genre, director_id, actor1, actor2, movie_id) VALUES(?,?,?,?,?,?,?)";
+                                                                
+                                                    connections.node1.query(query,[movieName, movieYear, movieGenre, director, actor1, actor2, movieID], async(err, result)=>{
+                                                        if(err){
+                                                            console.log(err);
+                                                        }
+                                                        else{                        
+                                                            console.log("logged in central")
+                                                        }
+                                                    })         
+                                                }
+                                                else if(action == "Delete Data"){
+                                                    var query = "INSERT INTO central.logs (movie_id) VALUES(?)";
+                                                                
+                                                    connections.node1.query(query,[movieID], async(err, result)=>{
+                                                        if(err){
+                                                            console.log(err);
+                                                        }
+                                                        else{                        
+                                                            console.log("logged in central")
+                                                        }
+                                                    })         
+                                                }
                                             }
                                         })                                    
                                         firstTime = false;
@@ -1168,15 +1278,15 @@ app.post('/connectionstatus', (req, res)=>{
                                 }
                                 else{
                                     console.log("node3 is now up")
+
                                     var query1 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
                                     let generated_id;
-               
+                                    //oppai8
                                     connections.node1.query(query1, (err, result)=>{
                                         if(err){
                                             console.log(err);
                                         }
-                                        else{
-                                        
+                                        else{                      
                                             console.log(result[0]['movie_id'])
                                             generated_id = result[0]['movie_id'] + 1;
                                         }
@@ -1194,6 +1304,7 @@ app.post('/connectionstatus', (req, res)=>{
                                                 let director;
                                                 let actor1;
                                                 let actor2;
+                                                let movieID;
                                                 let temp;
                                                 for(let index = 0; index < node1logs.length; index++){
                                                     temp = Object.values(node1logs[index])
@@ -1204,16 +1315,45 @@ app.post('/connectionstatus', (req, res)=>{
                                                     director = temp[3];
                                                     actor1 = temp[4];
                                                     actor2 = temp[5];
-                                                    var insertquery = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";                                               
-                                                    
-                                                    connections.node3.query(insertquery,[generated_id + index, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
-                                                        if(err){
-                                                            console.log(err);
-                                                        }
-                                                        else{                        
-                                                            console.log(result)
-                                                        }
-                                                    })
+                                                    movieID = temp[6];
+
+                                                    if(movieYear >= 1980){
+                                                        if(movieName !== null && movieID == null){
+                                                            var insertquery = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";                                                                                        
+                                                            connections.node3.query(insertquery,[generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                                                if(err){
+                                                                    console.log(err);
+                                                                }
+                                                                else{                        
+                                                                    console.log(result)
+                                                                    generated_id+=1
+                                                                }
+                                                            })
+                                                        }   
+                                                        else if(movieName !== null && movieID !== null){                                                                  
+                                                            var modifyquery = "UPDATE after1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
+        
+                                                            connections.node3.query(modifyquery,[movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                                                if(err){
+                                                                    console.log(err);
+                                                                }
+                                                                else{                        
+                                                                    console.log(result)
+                                                                }
+                                                            })
+                                                        }                                                           
+                                                        else if(movieName == null && movieID !== null){                                                                                                                        
+                                                            var deletequery = "DELETE FROM after1980 WHERE movie_id = " + movieID;
+                                                            connections.node3.query(deletequery,[movieID], (err, result)=>{
+                                                                if(err){
+                                                                    console.log(err);
+                                                                }
+                                                                else{                        
+                                                                    console.log(result)
+                                                                }
+                                                            })
+                                                        }  
+                                                    }
                                                 }
                                                 var resetQuery = "DELETE FROM central.logs"
                                                 connections.node1.query(resetQuery, (err, result)=>{
@@ -1221,7 +1361,7 @@ app.post('/connectionstatus', (req, res)=>{
                                                         console.log(err)
                                                     }
                                                     else{
-                                                        
+                                                        console.log("Central Log Delete")
                                                     }
                                                 })                              
                                             })                                   
@@ -1239,14 +1379,15 @@ app.post('/connectionstatus', (req, res)=>{
             }
             else if(req.body.action == "Modify Data"){
                 res.redirect('/centralmodify')
-            }          
+            } 
+            else if(req.body.action == "Delete Data"){
+                res.redirect('/centraldelete')
+            }         
         }
     })
 })
 
 app.get('/centralinsert', async(req, res)=>{
-    
-    
     let movieName = req.cookies["movieName"]
     let movieYear = req.cookies["movieYear"]
     let movieGenre = req.cookies["movieGenre"]
@@ -1268,22 +1409,18 @@ app.get('/centralinsert', async(req, res)=>{
             var query4 = "COMMIT;";
             connections.node1.query(query2, (err, result)=>{
                 if(err){
-                    //console.log(err);
+                    console.log(err);
                 }
-                else{
-                   
+                else{ 
                     console.log(result[0]['movie_id'])
                     generated_id = result[0]['movie_id'] + 1;
                 }
             })
             //console.log("Delayed")
             await new Promise(resolve => setTimeout(resolve, 500));
-            // add delay here so that have enough time to make node go offline
             connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
                 if(err){
                     console.log(err);
-                    //write to logs
-                    
                 }
                 else{
                     console.log(result)
@@ -1303,18 +1440,14 @@ app.get('/centralinsert', async(req, res)=>{
                         console.log("COMMIT");
                     }})
                     
-                    if(Number(movieYear) <= 1980){
-                        
-                        res.redirect('/node2insert')
-                        
+                    if(Number(movieYear) < 1980){  
+                        res.redirect('/node2insert')    
                     }
                     else{
-                       
                         res.redirect('/node3insert')
                     }
                 }
             })
-
         }
     })
 })
@@ -1401,13 +1534,10 @@ app.get('/node2insert', async(req, res)=>{
                         }})
                         if(redirect == true){
                             res.redirect('/editData')
-                        }
-                      
+                        }                    
                         console.log(result)
                     }
-                })
-
-               
+                })              
             }
         })}, 5000)
     
@@ -1494,20 +1624,15 @@ app.get('/node3insert', async(req, res)=>{
                             }})
                             if(redirect == true){
                                 res.redirect('/editData')
-                            }
-                            
+                            }                       
                             console.log(result)
                         }
                     })
                 }
-            }
-                
+            }            
         })
-    },5000)
-   
+    },5000) 
 })
-
-
 
 app.get('/centralmodify', async(req, res)=>{
     let movieID = req.cookies["movieID"]
@@ -1547,7 +1672,7 @@ app.get('/centralmodify', async(req, res)=>{
                 console.log("COMMIT");
             }})
             //no modify yet for them, copy paste if centralModify is good
-            if(Number(movieYear) <= 1980){                    
+            if(Number(movieYear) < 1980){                    
                 res.redirect('/node2modify')
             }
             else{                    
@@ -1567,16 +1692,16 @@ app.get('/node2modify', async(req, res)=>{
     let actor2 = req.cookies["actor2"]
     let redirect = true
     //test if good
-        var query = "UPDATE before1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
-        
-        // // generate movieid     
-        // await new Promise(resolve => setTimeout(resolve, 500));
-        connections.node2.getConnection((err,connection)=>{
-            if(err){
-                console.log("node2 is down");
-                redirect = false;
-            }
-        })
+    var query = "UPDATE before1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
+    
+    // // generate movieid     
+    // await new Promise(resolve => setTimeout(resolve, 500));
+    connections.node2.getConnection((err,connection)=>{
+        if(err){
+            console.log("node2 is down");
+            redirect = false;
+        }
+        else{
             connections.node2.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
                 if(err){
                     console.log(err);
@@ -1603,9 +1728,10 @@ app.get('/node2modify', async(req, res)=>{
                     if(redirect == true){
                         res.redirect('/editData')
                     }
-                    
                 }
             })
+        }
+    })
 })
 
 app.get('/node3modify', async(req, res)=>{
@@ -1618,49 +1744,45 @@ app.get('/node3modify', async(req, res)=>{
     let actor2 = req.cookies["actor2"]
     let redirect = true;
     
-
     //test if good
-        var query = "UPDATE after1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
-        
+    var query = "UPDATE after1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
     
-        connections.node3.getConnection((err,connection)=>{
-            if(err){
-                console.log("node3 is down")
-                redirect = false;
-            }
-            else{
-                connections.node3.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+    connections.node3.getConnection((err,connection)=>{
+        if(err){
+            console.log("node3 is down")
+            redirect = false;
+        }
+        else{
+            connections.node3.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log(result)
+                    var query4 = "DO SLEEP(10);";
+                    var query5 = "COMMIT;";
+
+                    connections.node1.query(query4, (err, result)=>{
                     if(err){
                         console.log(err);
                     }
                     else{
-                        console.log(result)
-                        var query4 = "DO SLEEP(10);";
-                        var query5 = "COMMIT;";
-
-                        connections.node1.query(query4, (err, result)=>{
-                        if(err){
-                            console.log(err);
-                        }
-                        else{
-                            console.log("DO SLEEP(10)");
-                        }})
-                        connections.node1.query(query5, (err, result)=>{
-                        if(err){
-                            console.log(err);
-                        }
-                        else{
-                            console.log("COMMIT");
-                        }})
-                        if(redirect = true){
-                            res.redirect('/editData')
-                        }
-                      
+                        console.log("DO SLEEP(10)");
+                    }})
+                    connections.node1.query(query5, (err, result)=>{
+                    if(err){
+                        console.log(err);
                     }
-                })
-            }
-        })
-            
+                    else{
+                        console.log("COMMIT");
+                    }})
+                    if(redirect = true){
+                        res.redirect('/editData')
+                    }
+                }
+            })
+        }
+    })          
 })
 
 app.get('/readUncommitted', async(req, res)=>{
