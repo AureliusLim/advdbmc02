@@ -1433,7 +1433,7 @@ app.get('/centralinsert', async(req, res)=>{
                 }
             })
             //console.log("Delayed")
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1678,14 +1678,16 @@ app.get('/centralmodify', async(req, res)=>{
             }
             else{
                 console.log("DO SLEEP(10)");
+
+                connections.node1.query(query5, (err, result)=>{
+                    if(err){
+                        console.log(err);
+                    }
+                    else{
+                        console.log("COMMIT");
+                    }})
             }})
-            connections.node1.query(query5, (err, result)=>{
-            if(err){
-                console.log(err);
-            }
-            else{
-                console.log("COMMIT");
-            }})
+            
             //no modify yet for them, copy paste if centralModify is good
             if(Number(movieYear) < 1980){                    
                 res.redirect('/node2modify')
@@ -1783,14 +1785,15 @@ app.get('/node3modify', async(req, res)=>{
                     }
                     else{
                         console.log("DO SLEEP(10)");
+                        connections.node1.query(query5, (err, result)=>{
+                        if(err){
+                            console.log(err);
+                        }
+                        else{
+                            console.log("COMMIT");
+                        }})
                     }})
-                    connections.node1.query(query5, (err, result)=>{
-                    if(err){
-                        console.log(err);
-                    }
-                    else{
-                        console.log("COMMIT");
-                    }})
+                    
                     if(redirect = true){
                         res.redirect('/editData')
                     }
