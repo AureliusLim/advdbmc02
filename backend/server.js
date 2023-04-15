@@ -520,7 +520,8 @@ app.get('/node3read', (req,res)=>{
 })
 
 app.get('/centraldelete', async(req, res)=>{
-    movie = req.body.movie_id;
+   
+    let movie = req.cookies["movieID"]
     let movieYear;
     let temp;
     //oppai9
@@ -536,12 +537,12 @@ app.get('/centraldelete', async(req, res)=>{
                 console.log(err);
             }
             else{       
-                temp = Object.values(node2logs[0])
-                movieYear = temp[1];
+                temp = Object.values(result[0])
+                movieYear = temp[2];
                 console.log(movieYear)
             }})
 
-            var query = "DELETE FROM centraldata WHERE movie_id = \'" + movie + "\'";
+            var query = "DELETE FROM centraldata WHERE movie_id = " + movie;
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
 
@@ -589,13 +590,13 @@ app.get('/centraldelete', async(req, res)=>{
 })
 
 app.get('/node2delete', async(req, res)=>{
-    movie = req.body.movie_id;
+    let movie = req.cookies["movieID"]
     connections.node2.getConnection((err,connection)=>{
         if(err){
             console.log(err);
         }
         else{
-            var query = "DELETE FROM before1980 WHERE movie_id = \'" + movie + "\'";
+            var query = "DELETE FROM before1980 WHERE movie_id = " + movie;
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
             connections.node2.query(query, (err, result)=>{
@@ -626,13 +627,13 @@ app.get('/node2delete', async(req, res)=>{
 })
 
 app.get('/node3delete', async(req, res)=>{
-    movie = req.body.movie_id;
+    let movie = req.cookies["movieID"]
     connections.node3.getConnection((err,connection)=>{
         if(err){
             console.log(err);
         }
         else{
-            var query = "DELETE FROM after1980 WHERE movie_id = \'" + movie + "\'";
+            var query = "DELETE FROM after1980 WHERE movie_id = " + movie;
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
             connections.node3.query(query, (err, result)=>{
@@ -1000,7 +1001,7 @@ app.post('/connectionstatus', (req, res)=>{
                                         generated_id += 1;
                                     }
                                     //modify log
-                                    else if(movieName !== null && movie_id !== null)
+                                    else if(movieName !== null && movieID !== null)
                                     {
                                         var editquery = "UPDATE centraldata SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
 
@@ -1015,7 +1016,7 @@ app.post('/connectionstatus', (req, res)=>{
                                         })
                                     }
                                     
-                                    else if(movieName == null && movie_id !== null)
+                                    else if(movieName == null && movieID !== null)
                                     {
                                         var deletequery = "DELETE FROM centraldata WHERE movie_id = " + movieID;
                                         connections.node1.query(deletequery,[movieID], (err, result)=>{
@@ -1038,17 +1039,18 @@ app.post('/connectionstatus', (req, res)=>{
                                         
                                     }
                                 })
+                                var resetQuery1 = "DELETE FROM node3.logs"
+                                connections.node3.query(resetQuery1, (err, result)=>{
+                                    if (err){
+                                        console.log(err)
+                                    }
+                                    else{
+                                        
+                                    }
+                                })
                             })                           
                           }  
-                          else{
-                            connections.node3.getConnection(async(err, connection)=>{
-                                if (!err){
-                                    var query = "SELECT * FROM node3.logs"
-
-                                    var resetQuery = "DELETE FROM node3.logs"
-                                }  
-                              })
-                          }
+                          
                         })
                         clearInterval(checkCentral)                    
                     }
