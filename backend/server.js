@@ -27,131 +27,129 @@ app.get('/editData', (req, res)=>{
     res.sendFile(path.join(__dirname,'views/editData.html'))
 })
 
-app.get('/centralread', async(req,res)=>{
-    let checker = false;
+app.get('/readAll', async(req,res)=>{
+    let checker = true;
     connections.node2.getConnection((err, connection)=>{
         if(err){
-            checker = true;
+            checker = false;
         }
     })
     connections.node3.getConnection((err, connection)=>{
         if(err){
-            checker = true;
+            checker = false;
         }
     })
     if(checker == true){ // slave nodes are up
         let headerString;
-                let header;
-                let arr="";
-                let arr2="";
-                var query = "Select * from before1980";
-                var query1 = "Select * from after1980";
-                connections.node2.query(query, async(err, result)=>{
-                    if(err){
-
-                    }
-                    else{
-                        header = Object.keys(result[0]);
-                        headerString = header.join(",");
-                        arr += headerString;
-                        arr += "\n";
-                        let temp;
-                        
+        let header;
+        let arr="";
+        let arr2="";
+        var query = "Select * from before1980";
+        var query1 = "Select * from after1980";
+        var commit = "COMMIT";
+        connections.node2.query(query, (err, result)=>{
+            if(err){ }
+            else{
+                header = Object.keys(result[0]);
+                headerString = header.join(",");
+                arr += headerString;
+                arr += "\n";
+                let temp;
                 
+                for (let i = 0; i < result.length; i++){
+                    temp = Object.values(result[i]);
+                    temp[1] = temp[1].replaceAll(',','');
+                    temp = temp.toString();
+                    temp += ',';
+                    arr += temp;
+                    arr += "\n";
+                    
+                }
+                connections.node2.query(commit, (err, result)=>{
+                    if(err) { console.log(err)}
+                })
+                connections.node3.query(query1, (err, result)=>{
+                    if(err){ }
+                    else{                            
                         for (let i = 0; i < result.length; i++){
                             temp = Object.values(result[i]);
                             temp[1] = temp[1].replaceAll(',','');
                             temp = temp.toString();
                             temp += ',';
-                            arr += temp;
-                            arr += "\n";
+                            arr2 += temp;
+                            arr2 += "\n";
                             
                         }
-                        connections.node3.query(query1, async(err, result)=>{
-                            if(err){
-
+                        // sort arr and arr2 when combining the data from node2 and node3
+                        let finalarr="";
+                        arr = arr.split('\n')
+                        arr2 = arr2.split('\n')
+                        finalarr += arr[0]
+                        finalarr += '\n'
+                        let count1 = 1; //skip header
+                        let count2 = 0;
+                        console.log(arr.length)
+                        console.log(arr2.length)
+                        while(count1 < arr.length && count2 < arr2.length){
+                            firstpart = arr[count1].split(',');
+                            secondpart = arr2[count2].split(',')
+                            
+                            if(Number(firstpart[0]) < Number(secondpart[0])){ 
+                                finalarr += arr[count1]
+                                finalarr += '\n'
+                                count1++
+                                if(count1 == arr.length){
+                                    break;
+                                }
                             }
                             else{
-                              
-                                for (let i = 0; i < result.length; i++){
-                                    temp = Object.values(result[i]);
-                                    temp[1] = temp[1].replaceAll(',','');
-                                    temp = temp.toString();
-                                    temp += ',';
-                                    arr2 += temp;
-                                    arr2 += "\n";
-                                    
-                                }
-                                // sort arr and arr2 when combining the data from node2 and node3
-                                let finalarr="";
-                                arr = arr.split('\n')
-                                arr2 = arr2.split('\n')
-                                finalarr += arr[0]
+                                finalarr += arr2[count2]
                                 finalarr += '\n'
-                                let count1 = 1; //skip header
-                                let count2 = 0;
-                                console.log(arr.length)
-                                console.log(arr2.length)
-                                while(count1 < arr.length && count2 < arr2.length){
-                                    firstpart = arr[count1].split(',');
-                                    secondpart = arr2[count2].split(',')
-                                    
-                                    if(Number(firstpart[0]) < Number(secondpart[0])){ 
-                                        finalarr += arr[count1]
-                                        finalarr += '\n'
-                                        count1++
-                                        if(count1 == arr.length){
-                                            break;
-                                        }
-                                    }
-                                    else{
-                                        finalarr += arr2[count2]
-                                        finalarr += '\n'
-                                        count2++
-                                        if(count2 == arr2.length){
-                                            break;
-                                        }
-                                    }
+                                count2++
+                                if(count2 == arr2.length){
+                                    break;
                                 }
-        
-                                while(count1 < arr.length){
-                                    finalarr += arr[count1]
-                                    finalarr += '\n'
-                                    count1++
-                                }
-                            
-                            
-                                while(count2 < arr2.length){
-                                    finalarr += arr2[count2]
-                                    finalarr += '\n'
-                                    count2++
-                                }
-                               
-                              
-                                try {
-                                    fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), finalarr, async(err)=>{
-                                      
-                                        if(err){
-                                            console.log(err)
-                                        }
-                                        else{
-                                            console.log("saved")
-                                            res.download(path.join(__dirname, 'files', "output.csv"))
-                                        }
-                                    });
-                                    // file written successfully
-                                  } catch (err) {
-                                    console.error(err);
-                                  }
                             }
-                            
+                        }       
+                        while(count1 < arr.length){
+                            finalarr += arr[count1]
+                            finalarr += '\n'
+                            count1++
+                        }                                                   
+                        while(count2 < arr2.length){
+                            finalarr += arr2[count2]
+                            finalarr += '\n'
+                            count2++
+                        }
+                        
+                        connections.node3.query(commit, (err, result)=>{
+                            if(err) { console.log(err)}
                         })
-                    }
+                        
+                        try {
+                            fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), finalarr, async(err)=>{
+                                
+                                if(err){
+                                    console.log(err)
+                                }
+                                else{
+                                    console.log("saved")
+                                    res.download(path.join(__dirname, 'files', "output.csv"))
+                                }
+                            });
+                            // file written successfully
+                        } catch (err) {
+                        console.error(err);
+                        }
+                    }                            
                 })
+            }
+        })
     }
     else{
         var query = "Select * from centraldata";
-        connections.node1.query(query, async(err, result)=>{
+        var commit = "COMMIT";
+        connections.node1.query(query, (err, result)=>{
             if(err){
                 console.log(err)
             }
@@ -171,12 +169,10 @@ app.get('/centralread', async(req,res)=>{
                     temp += ',';
                     arr += temp;
                     arr += "\n";
-                    //console.log(Object.values(result[i]).join(','))
                 }
-
-
-
-
+                connections.node1.query(commit, (err, result)=>{
+                    if(err) { console.log(err)}
+                })
                 try {
                     fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
                         if(err){
@@ -188,18 +184,16 @@ app.get('/centralread', async(req,res)=>{
                         }
                     });
                     // file written successfully
-                  } catch (err) {
-                    console.error(err);
-                  }
-            }
-            
+                } catch (err) {
+                console.error(err);
+                }
+            }           
         })
-    }
-    
+    }   
 })
 
 // check if good
-app.get('/centralreadOne', async(req,res)=>{
+app.get('/centralreadOne', (req,res)=>{
     connections.node1.getConnection((err,connection)=>{
         if(err){
             // Put error message that server is down
@@ -211,12 +205,13 @@ app.get('/centralreadOne', async(req,res)=>{
 
             var query = "SELECT * FROM before1980 WHERE movie_id = " + movieID;
             var query1 = "SELECT * FROM after1980 WHERE movie_id = " + movieID;
+            var commit = "COMMIT";
 
-
-            connections.node2.query(query, async(err, result)=>{
-                if(err){
-                    console.log(err)
+            connections.node2.query(query, (err, result)=>{
+                if(err){ 
+                    console.log(err)              
                 }
+                
                 else if(result){
                     header = Object.keys(result[0]);
                     headerString = header.join(",");
@@ -224,16 +219,21 @@ app.get('/centralreadOne', async(req,res)=>{
                     arr += "\n";
                     let temp;
             
-                    // for (let i = 0; i < result.length; i++){
                     temp = Object.values(result[i]);
                     temp[1] = temp[1].replaceAll(',','');
                     temp = temp.toString();
                     temp += ',';
                     arr += temp;
                     arr += "\n";
-                }
+                    connections.node2.query(commit, (err, result)=>{
+                        if(err) { console.log(err)}
+                    })
+                }   
                 else{
-                    connections.node3.query(query1, async(err, result)=>{
+                    connections.node2.query(commit, (err, result)=>{
+                        if(err) { console.log(err)}
+                    })
+                    connections.node3.query(query1, (err, result)=>{
                         if(err){
                             console.log(err)
                         }
@@ -243,22 +243,26 @@ app.get('/centralreadOne', async(req,res)=>{
                             arr += headerString;
                             arr += "\n";
                             let temp;
-                    
-                            // for (let i = 0; i < result.length; i++){
+
                             temp = Object.values(result[i]);
                             temp[1] = temp[1].replaceAll(',','');
                             temp = temp.toString();
                             temp += ',';
                             arr += temp;
                             arr += "\n";
+                            connections.node3.query(commit, (err, result)=>{
+                                if(err) { console.log(err)}
+                            })
                         }
                         else{
                             console.log("Movie Id does not exist")
+                            connections.node3.query(commit, (err, result)=>{
+                                if(err) { console.log(err)}
+                            })
                         }
                     })             
                 }
-            })    
-                          
+            })                   
             try {
                 fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), finalarr, async(err)=>{
                 
@@ -273,16 +277,14 @@ app.get('/centralreadOne', async(req,res)=>{
                 // file written successfully
             } catch (err) {
                 console.error(err);
-                }
+            }
         }
         
         else{
-            // let movieID = req.body.movie_id
-            let movieID = 2
-
+            let movieID = req.body.movie_id
             var query = "SELECT * FROM centraldata WHERE movie_id = " + movieID
-
-            connections.node1.query(query, async(err, result)=>{
+            var commit = "COMMIT";
+            connections.node1.query(query, (err, result)=>{
                 if(err){
                     console.log(err)
                 }
@@ -303,6 +305,9 @@ app.get('/centralreadOne', async(req,res)=>{
                     arr += temp;
                     arr += "\n";
 
+                    connections.node1.query(commit, (err, result)=>{
+                        if(err) { console.log(err)}
+                    })
                     try {
                         fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
                             if(err){
@@ -314,46 +319,44 @@ app.get('/centralreadOne', async(req,res)=>{
                             }
                         });
                         // file written successfully
-                      } catch (err) {
+                    } catch (err) {
                         console.error(err);
-                      }
-                }
-                
+                    }
+                }          
             })
-            // res.sendFile(path.join(__dirname,'views/centralNode.html'));
         }
     })
 })
 
-app.get('/node2read', async(req,res)=>{
+app.get('/node2read', (req,res)=>{
     connections.node2.getConnection((err,connection)=>{
         if(err){
             let headerString;
             let header;
             let arr="";
             var query = "Select * from centraldata where year < 1980";
+            var commit = "COMMIT";
            console.log("redirected")
-            connections.node1.query(query, async(err, result)=>{
-                if(err){
-
-                }
+            connections.node1.query(query, (err, result)=>{
+                if(err){}
                 else{
                     header = Object.keys(result[0]);
                     headerString = header.join(",");
                     arr += headerString;
                     arr += "\n";
                     let temp;
-                    
-            
+    
                     for (let i = 0; i < result.length; i++){
                         temp = Object.values(result[i]);
                         temp[1] = temp[1].replaceAll(',','');
                         temp = temp.toString();
                         temp += ',';
                         arr += temp;
-                        arr += "\n";
-                        
+                        arr += "\n";                       
                     }     
+                    connections.node1.query(commit, (err, result)=>{
+                        if(!err){console.log("COMMIT")}
+                    })
                     try {
                         fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{
                             
@@ -366,23 +369,19 @@ app.get('/node2read', async(req,res)=>{
                             }
                         });
                         // file written successfully
-                        } catch (err) {
-                        console.error(err);
-                        }
-                            
-                    
+                    } catch (err) {
+                    console.error(err);
                     }
+                }
             })
-            
         }
         else{
             var query = "Select * from before1980";
-            connections.node2.query(query, async(err, result)=>{
+            connections.node2.query(query, (err, result)=>{
                 if(err){
                     console.log(err)
                 }
-                else{
-                   
+                else{               
                     var header = Object.keys(result[0]);
                     headerString = header.join(",");
                     var arr="";
@@ -400,12 +399,11 @@ app.get('/node2read', async(req,res)=>{
                         arr += "\n";
                         
                     }
-
-
-
-
+                    connections.node2.query(commit, (err, result)=>{
+                        if(!err){console.log("COMMIT")}
+                    })
                     try {
-                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
+                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{
                             if(err){
                                 console.log(err)
                             }
@@ -415,21 +413,16 @@ app.get('/node2read', async(req,res)=>{
                             }
                         });
                         // file written successfully
-                      } catch (err) {
-                        console.error(err);
-                      }
-
-                }
-                
-            })
-            //res.sendFile(path.join(__dirname,'views/node1.html'));
-           
+                    } catch (err) {
+                    console.error(err);
+                    }
+                }   
+            })         
         }
     })
-   
 })
 
-app.get('/node3read', async(req,res)=>{
+app.get('/node3read', (req,res)=>{
     connections.node3.getConnection((err,connection)=>{
         if(err){
             let headerString;
@@ -437,21 +430,17 @@ app.get('/node3read', async(req,res)=>{
             let arr="";
             var query = "Select * from centraldata where year >= 1980";
             var commit = "COMMIT";
-           console.log("redirected")
+            console.log("redirected")
             connections.node1.query(query, (err, result)=>{
-                if(err){
-
-                }
-                else{
+                if(!err){
                     connections.node1.query(commit, (err, result)=>{
                         if(!err){
                             header = Object.keys(result[0]);
                             headerString = header.join(",");
                             arr += headerString;
                             arr += "\n";
-                            let temp;
-                            
-                    
+                            let temp;                       
+
                             for (let i = 0; i < result.length; i++){
                                 temp = Object.values(result[i]);
                                 temp[1] = temp[1].replaceAll(',','');
@@ -459,7 +448,10 @@ app.get('/node3read', async(req,res)=>{
                                 temp += ',';
                                 arr += temp;
                                 arr += "\n";                     
-                            }     
+                            }    
+                            connections.node1.query(commit, (err, result)=>{
+                                if(!err){console.log("COMMIT")}
+                            })
                             try {
                                 fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{                          
                                     if(err){
@@ -473,15 +465,16 @@ app.get('/node3read', async(req,res)=>{
                                 // file written successfully
                             } catch (err) {
                                 console.error(err);
-                            }     
+                            }
                         }
-                    })                                                     
+                    })
                 }
             })
         }
         else{
             var query = "Select * from after1980";
-            connections.node3.query(query, async(err, result)=>{
+            var commit = "COMMIT";
+            connections.node3.query(query, (err, result)=>{
                 if(err){
                     console.log(err)
                 }
@@ -501,14 +494,13 @@ app.get('/node3read', async(req,res)=>{
                         temp += ',';
                         arr += temp;
                         arr += "\n";
-                        //console.log(Object.values(result[i]).join(','))
                     }
-
-
-
+                    connections.node3.query(commit, (err, result)=>{
+                        if(!err){console.log("COMMIT")}
+                    })
 
                     try {
-                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, (err)=>{
+                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{
                             if(err){
                                 console.log(err)
                             }
@@ -518,16 +510,13 @@ app.get('/node3read', async(req,res)=>{
                             }
                         });
                         // file written successfully
-                      } catch (err) {
+                    } catch (err) {
                         console.error(err);
-                      }
-                }
-                
+                    }
+                }              
             })
-            //res.sendFile(path.join(__dirname,'views/node2.html'));
         }
     })
-    
 })
 
 app.get('/centraldelete', async(req, res)=>{
@@ -1419,7 +1408,7 @@ app.get('/centralinsert', async(req, res)=>{
             })
             //console.log("Delayed")
             await new Promise(resolve => setTimeout(resolve, 500));
-            connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+            connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
                 }
@@ -1511,7 +1500,7 @@ app.get('/node2insert', async(req, res)=>{
                     generated_id = highestnode3;
                 }
 
-                connections.node2.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                connections.node2.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                     if(err){
                         //console.log(err);
                     }
@@ -1601,7 +1590,7 @@ app.get('/node3insert', async(req, res)=>{
                     else{
                         generated_id = highestnode3
                     }
-                    connections.node3.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+                    connections.node3.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                         if(err){
                             //console.log(err);
                         }
@@ -1645,11 +1634,7 @@ app.get('/centralmodify', async(req, res)=>{
     let actor2 = req.cookies["actor2"]
 
     var query = "UPDATE centraldata SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
-    
-    // // generate movieid     
-    // await new Promise(resolve => setTimeout(resolve, 500));
-    
-    connections.node1.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+    connections.node1.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
         if(err){
             console.log("Central Node Down");
         }
@@ -1703,7 +1688,7 @@ app.get('/node2modify', async(req, res)=>{
             redirect = false;
         }
         else{
-            connections.node2.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+            connections.node2.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
                 }
@@ -1754,7 +1739,7 @@ app.get('/node3modify', async(req, res)=>{
             redirect = false;
         }
         else{
-            connections.node3.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], async(err, result)=>{
+            connections.node3.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
                 }
@@ -1794,7 +1779,6 @@ app.get('/readUncommitted', async(req, res)=>{
         }
         else{
             var query = "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;";
-            
             var query2 = "SET autocommit = 0;";
             connections.node1.query(query, (err, result)=>{
                 if(err){
