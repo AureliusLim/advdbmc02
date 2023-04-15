@@ -436,46 +436,47 @@ app.get('/node3read', async(req,res)=>{
             let header;
             let arr="";
             var query = "Select * from centraldata where year >= 1980";
+            var commit = "COMMIT";
            console.log("redirected")
-            connections.node1.query(query, async(err, result)=>{
+            connections.node1.query(query, (err, result)=>{
                 if(err){
 
                 }
                 else{
-                    header = Object.keys(result[0]);
-                    headerString = header.join(",");
-                    arr += headerString;
-                    arr += "\n";
-                    let temp;
-                    
-            
-                    for (let i = 0; i < result.length; i++){
-                        temp = Object.values(result[i]);
-                        temp[1] = temp[1].replaceAll(',','');
-                        temp = temp.toString();
-                        temp += ',';
-                        arr += temp;
-                        arr += "\n";
-                        
-                    }     
-                    try {
-                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{
+                    connections.node1.query(commit, (err, result)=>{
+                        if(!err){
+                            header = Object.keys(result[0]);
+                            headerString = header.join(",");
+                            arr += headerString;
+                            arr += "\n";
+                            let temp;
                             
-                            if(err){
-                                console.log(err)
-                            }
-                            else{
-                                console.log("saved")
-                                res.download(path.join(__dirname, 'files', "output.csv"))
-                            }
-                        });
-                        // file written successfully
-                        } catch (err) {
-                        console.error(err);
+                    
+                            for (let i = 0; i < result.length; i++){
+                                temp = Object.values(result[i]);
+                                temp[1] = temp[1].replaceAll(',','');
+                                temp = temp.toString();
+                                temp += ',';
+                                arr += temp;
+                                arr += "\n";                     
+                            }     
+                            try {
+                                fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{                          
+                                    if(err){
+                                        console.log(err)
+                                    }
+                                    else{
+                                        console.log("saved")
+                                        res.download(path.join(__dirname, 'files', "output.csv"))
+                                    }
+                                });
+                                // file written successfully
+                            } catch (err) {
+                                console.error(err);
+                            }     
                         }
-                            
-                    
-                    }
+                    })                                                     
+                }
             })
         }
         else{
