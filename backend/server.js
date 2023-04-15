@@ -26,6 +26,9 @@ app.get('/',(req,res)=>{
 app.get('/editData', (req, res)=>{
     res.sendFile(path.join(__dirname,'views/editData.html'))
 })
+app.get('/readData', (req, res)=>{
+    res.sendFile(path.join(__dirname,'views/readData.html'))
+})
 
 app.get('/readAll', async(req,res)=>{
     let checker = true;

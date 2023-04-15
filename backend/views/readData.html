@@ -1,0 +1,182 @@
+<html>
+    <Title>IMDB Dataset</Title>
+    <head>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background: linear-gradient(#ffffff, #dddddd);
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+
+            }
+            header {
+                background-color: #333;
+                color: #fff;
+                padding: 20px;
+                text-align: center;
+            }
+            main {
+                max-width: 800px;
+                margin-left: 50px;
+                padding: 20px;
+                height: 490px;
+            }
+            .forms {
+                display: flex;
+            }
+            footer {
+                background-color: #333;
+                color: #fff;
+                padding: 20px;
+                text-align: center;
+                bottom: 0;
+                width: 100%;
+            }
+    
+            a, #action {
+                background-color: #0077cc;
+                border: 2px solid #0077cc;
+                border-radius: 4px;
+                color: #fff;
+                display: inline-block;
+                font-size: 16px;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                transition: background-color 0.2s ease-in-out;
+                }
+    
+            a:hover, #action:hover  {
+                background-color: #005ea2;
+                border-color: #005ea2;
+            }
+
+            form {
+                display: flex;
+                flex-direction: column;
+                align-items: left;
+                background-color: #F2F2F2;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                width: 300px;
+                margin-right: 50px;
+            }
+
+            input {
+                padding: 10px;
+                margin-bottom: 0px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 16px;
+            }   
+
+            
+            label{
+                font-size: 18px;
+                vertical-align: middle;
+                position: inherit;
+            }
+
+            input[type="radio"]{
+                vertical-align: middle;
+            }
+            
+            .isolation {
+                display: flex;
+                align-items: middle;
+                background-color: #F2F2F2;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                max-width: 1000px;
+                margin-right: 100px;
+            }
+
+            
+            .form-popup {
+                display: none;
+                margin-top: 15px;
+                width: 260px;
+                border-radius: 4px;
+                background-color: #fafafa;
+                padding: 20px;
+                box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+            }
+
+            .form-popup form {
+                padding: 20px;
+            }
+
+            .form-popup .cancel {
+                background-color: #dc766f;
+            }
+        </style>
+        <script>
+            function openForm() {
+                document.getElementById("myForm").style.display = "block";
+            }
+            function closeForm() {
+                document.getElementsByName("filter")[0].checked=false;
+                document.getElementsByName("filter")[1].checked=false;
+                document.getElementsByName("filter")[2].checked=false;
+                document.getElementById("myForm").style.display = "none";
+            }
+            function submitForm() {
+                var selectedFilter = document.querySelector('input[name="filter"]:checked');
+                if (selectedFilter === null) {
+                    alert("Please select a filter option.");
+                    return;
+                } else if (selectedFilter.value === "before1980") {
+                    window.location.href = "/node2read";
+                } else if (selectedFilter.value === "after1980") {
+                    window.location.href = "/node3read";
+                } else if (selectedFilter.value === "all") {
+                    window.location.href = "/readAll"; /*need changes to corresponding function*/
+                    document.getElementById("myForm").style.display = "none";
+                }
+            }
+            </script>
+    </head>
+
+    <body>
+        <header>
+            <H2>Read Data form</H2>
+        </header>
+        <main>
+            <h3>Actions:</h3>
+            <div class="forms">
+                <form id="readAll">
+                    <!-- check if doesnt exist -->  
+                    <a id = "readData" onclick="openForm()">Read All Data</a>
+                    <div id="myForm" class="form-popup">
+                        <form action="/submit-form">
+                          <h2>Please select a filter:</h2>  
+                          <input type="radio" id="before1980" name="filter" value="before1980" required>
+                          <label for="before1980">Before 1980</label><br>
+                          <input type="radio" id="after1980" name="filter" value="after1980" required>
+                          <label for="after1980">During and After 1980</label><br>
+                          <input type="radio" id="all" name="filter" value="all" required>
+                          <label for="all">All</label><br><br>
+                          <button type="button" class="btn" onclick="submitForm()">Download</button>
+                          <button type="button" class="btn cancel" onclick="closeForm()">Cancel</button>
+                        </form>
+                    </div>
+                </form>
+                <form id="readSpecific" action="/connectionstatus" method="POST">
+                    <!-- check if exist -->
+                    <label for="movie_id">Movie ID:</label>
+                    <input type="text" id="movie_id" name="movie_id"><br>  
+                    <input type="submit" id="action" name="action" value="Read Specific Data"/>    
+                </form>
+            
+            </div>
+        </main>
+        
+    </body>
+    <footer>
+        <a href="/">Return to Main Menu</a>
+    </footer>
+</html>
