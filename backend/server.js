@@ -1678,7 +1678,6 @@ app.get('/centralmodify', async(req, res)=>{
             }
             else{
                 console.log("DO SLEEP(10)");
-
                 connections.node1.query(query5, (err, result)=>{
                     if(err){
                         console.log(err);
@@ -1687,6 +1686,7 @@ app.get('/centralmodify', async(req, res)=>{
                         console.log("COMMIT");
                     }})
             }})
+            
             
             //no modify yet for them, copy paste if centralModify is good
             if(Number(movieYear) < 1980){                    
