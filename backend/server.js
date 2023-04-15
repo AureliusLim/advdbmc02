@@ -1433,7 +1433,7 @@ app.get('/centralinsert', async(req, res)=>{
                 }
             })
             //console.log("Delayed")
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 10000));
             connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1441,7 +1441,7 @@ app.get('/centralinsert', async(req, res)=>{
                 else{
                     console.log(result)
 
-                    connections.node1.query(query3, (err, result)=>{
+                    connections.node1.query(query3, async(err, result)=>{
                     if(err){
                         console.log(err);
                     }
@@ -1633,6 +1633,7 @@ app.get('/node3insert', async(req, res)=>{
                             else{
                                 console.log("DO SLEEP(10)");
                             }})
+
                             connections.node1.query(query5, (err, result)=>{
                             if(err){
                                 console.log(err);
