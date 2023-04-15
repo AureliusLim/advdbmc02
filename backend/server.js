@@ -29,16 +29,18 @@ app.get('/editData', (req, res)=>{
 
 app.get('/readAll', async(req,res)=>{
     let checker = true;
-    connections.node2.getConnection((err, connection)=>{
+    connections.node2.getConnection(async(err, connection)=>{
+        if(err){
+            checker = false;
+            console.log("failed connect node2")
+        }
+    })
+    connections.node3.getConnection(async(err, connection)=>{
         if(err){
             checker = false;
         }
     })
-    connections.node3.getConnection((err, connection)=>{
-        if(err){
-            checker = false;
-        }
-    })
+     await new Promise(resolve => setTimeout(resolve, 10000));
     if(checker == true){ // slave nodes are up
         let headerString;
         let header;
@@ -47,6 +49,7 @@ app.get('/readAll', async(req,res)=>{
         var query = "Select * from before1980";
         var query1 = "Select * from after1980";
         var commit = "COMMIT";
+        console.log("CHECKER TRUE")
         connections.node2.query(query, (err, result)=>{
             if(err){ }
             else{
@@ -96,7 +99,8 @@ app.get('/readAll', async(req,res)=>{
                             
                             if(Number(firstpart[0]) < Number(secondpart[0])){ 
                                 finalarr += arr[count1]
-                                finalarr += '\n'
+                                if(count1 + 1 != arr.length)
+                                    finalarr += '\n'
                                 count1++
                                 if(count1 == arr.length){
                                     break;
@@ -104,7 +108,8 @@ app.get('/readAll', async(req,res)=>{
                             }
                             else{
                                 finalarr += arr2[count2]
-                                finalarr += '\n'
+                                if(count2 + 1 != arr2.length)
+                                    finalarr += '\n'
                                 count2++
                                 if(count2 == arr2.length){
                                     break;
@@ -946,7 +951,7 @@ app.post('/connectionstatus', (req, res)=>{
                     else{
                         console.log("Central Server is now up!")
                         var query1 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
-                   
+                        let generated_id;
                         connections.node1.query(query1, (err, result)=>{
                             if(err){
                                 //console.log(err);
@@ -1118,9 +1123,10 @@ app.post('/connectionstatus', (req, res)=>{
                             else{
                                 console.log("node2 is now up")
                                 var query1 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+                                var query2 = "SELECT * from central.logs where movie_id is null;"
                                 let generated_id;
-                                
-                                connections.node1.query(query1, (err, result)=>{
+                                let lengthinsert;
+                                connections.node1.query(query1, async(err, result)=>{
                                     if(err){
                                         console.log(err);
                                     }
@@ -1130,12 +1136,26 @@ app.post('/connectionstatus', (req, res)=>{
                                         generated_id = result[0]['movie_id'] + 1;
                                     }
                                 })
-                                await new Promise(resolve => setTimeout(resolve, 500));
+                                connections.node1.query(query2, async(err, result)=>{
+                                    if(err){
+                                        console.log(err);
+                                    }
+                                    else{
+                                    
+                                        lengthinsert = result.length
+                                    }
+                                })
+                                
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                console.log("length:"+ lengthinsert)
+                                console.log("STARTING ID:"+ generated_id)
+                                generated_id = generated_id - lengthinsert
+                                console.log("new ID:"+ generated_id)
                                 connections.node1.getConnection(async(err, connection)=>{
                                     //oppai6
                                     if (!err){
                                         var resultquery = "SELECT * FROM central.logs"
-                                    
+                                        
                                         connections.node1.query(resultquery, (err, node1logs)=>{
                                             console.log(node1logs.length)
                                             let movieName;
@@ -1146,6 +1166,7 @@ app.post('/connectionstatus', (req, res)=>{
                                             let actor2;
                                             let temp;
                                             let movieID;
+                                            
                                             for(let index = 0; index < node1logs.length; index++){
                                                 temp = Object.values(node1logs[index])
                                                 movieName = temp[0];
@@ -1195,14 +1216,14 @@ app.post('/connectionstatus', (req, res)=>{
                                                     }  
                                                 }                                               
                                             }
-                                            var resetQuery = "DELETE FROM central.logs"
-                                            connections.node1.query(resetQuery, (err, result)=>{
-                                                if (err){
-                                                    console.log(err)
-                                                }
-                                                else{                                                   
-                                                }
-                                            })                       
+                                            // var resetQuery = "DELETE FROM central.logs"
+                                            // connections.node1.query(resetQuery, (err, result)=>{
+                                            //     if (err){
+                                            //         console.log(err)
+                                            //     }
+                                            //     else{                                                   
+                                            //     }
+                                            // })                       
                                         })                               
                                     }                          
                                 })
@@ -1466,70 +1487,72 @@ app.get('/node2insert', async(req, res)=>{
             else{
                 console.log('Node2 is up')
                 clearInterval(checkNode2)
-                var query = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
-                // generate movieid
-                var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
-                connections.node2.query(query2, async(err, result)=>{
-                    if(err){
-                        //console.log(err);
-                        redirect = false;
-                        console.log("node3 down")
-                    }
-                    else{
-                        console.log("node3 is up")
-                        console.log(result[0]['movie_id'])
-                        highestnode2 = result[0]['movie_id'] + 1;
-                    }
-                })
-                var query3 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
-                connections.node3.query(query3, async(err, result)=>{
-                    if(err){
-                        //console.log(err);
-                        redirect = false;
-                        console.log("node3 down")
-                    }
-                    else{
-                        console.log("node3 is up")
-                        console.log(result[0]['movie_id'])
-                        highestnode3 = result[0]['movie_id'] + 1;
-                    }
-                })
-                await new Promise(resolve => setTimeout(resolve, 500));
-                if(highestnode2 > highestnode3){
-                    generated_id = highestnode2;
-                }
-                else{
-                    generated_id = highestnode3;
-                }
-
-                connections.node2.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
-                    if(err){
-                        //console.log(err);
-                    }
-                    else{
-                        var query4 = "DO SLEEP(10);";
-                        var query5 = "COMMIT;";
-
-                        connections.node1.query(query4, (err, result)=>{
-                        if(err){
-                            console.log(err);
+                if (redirect == true){
+                        var query = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
+                        // generate movieid
+                        var query2 = "SELECT * from before1980 ORDER BY movie_id DESC LIMIT 1;"
+                        connections.node2.query(query2, async(err, result)=>{
+                            if(err){
+                                //console.log(err);
+                                redirect = false;
+                                console.log("node2 down")
+                            }
+                            else{
+                                console.log("node2 is up")
+                                console.log(result[0]['movie_id'])
+                                highestnode2 = result[0]['movie_id'] + 1;
+                            }
+                        })
+                        var query3 = "SELECT * from after1980 ORDER BY movie_id DESC LIMIT 1;"
+                        connections.node3.query(query3, async(err, result)=>{
+                            if(err){
+                                //console.log(err);
+                                redirect = false;
+                                console.log("node3 down")
+                            }
+                            else{
+                                console.log("node3 is up")
+                                console.log(result[0]['movie_id'])
+                                highestnode3 = result[0]['movie_id'] + 1;
+                            }
+                        })
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        if(highestnode2 > highestnode3){
+                            generated_id = highestnode2;
                         }
                         else{
-                            console.log("DO SLEEP(10)");
-                        }})
-                        connections.node1.query(query5, (err, result)=>{
-                        if(err){
-                            console.log(err);
+                            generated_id = highestnode3;
                         }
-                        else{
-                            console.log("COMMIT");
-                        }})
-                        if(redirect == true){
-                            res.redirect('/editData')
-                        }                    
-                        console.log(result)
-                    }
-                })              
+
+                        connections.node2.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                            if(err){
+                                //console.log(err);
+                            }
+                            else{
+                                var query4 = "DO SLEEP(10);";
+                                var query5 = "COMMIT;";
+
+                                connections.node1.query(query4, (err, result)=>{
+                                if(err){
+                                    console.log(err);
+                                }
+                                else{
+                                    console.log("DO SLEEP(10)");
+                                }})
+                                connections.node1.query(query5, (err, result)=>{
+                                if(err){
+                                    console.log(err);
+                                }
+                                else{
+                                    console.log("COMMIT");
+                                }})
+                                if(redirect == true){
+                                    res.redirect('/editData')
+                                }                    
+                                console.log(result)
+                            }
+                        })
+            }              
             }
         })}, 5000)
     
