@@ -1230,7 +1230,7 @@ app.post('/connectionstatus', (req, res)=>{
                                         var resultquery = "SELECT * FROM central.logs"
                                         
                                         connections.node1.query(resultquery, (err, node1logs)=>{
-                                            console.log(node1logs.length)
+                                            //console.log(node1logs.length)
                                             let movieName;
                                             let movieYear;
                                             let movieGenre;
@@ -1239,7 +1239,7 @@ app.post('/connectionstatus', (req, res)=>{
                                             let actor2;
                                             let temp;
                                             let movieID;
-                                            
+                                            let counter = 0;
                                             for(let index = 0; index < node1logs.length; index++){
                                                 temp = Object.values(node1logs[index])
                                                 movieName = temp[0];
@@ -1250,18 +1250,21 @@ app.post('/connectionstatus', (req, res)=>{
                                                 actor1 = temp[4];
                                                 actor2 = temp[5];
                                                 movieID = temp[6];
+                                                console.log("current:"+(generated_id+counter))
                                                 if(movieYear < 1980){
                                                     if(movieName !== null && movieID == null){
                                                         var insertquery = "INSERT INTO before1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";                                                                                        
-                                                        connections.node2.query(insertquery,[generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                                        connections.node2.query(insertquery,[generated_id+counter, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                                                             if(err){
                                                                 console.log(err);
                                                             }
-                                                            else{                        
-                                                                console.log(result)
-                                                                generated_id+=1
+                                                            else{  
+                            
+                                                                //console.log(result)
+                                                                
                                                             }
                                                         })
+                                                        counter = counter + 1;  
                                                     }   
                                                     else if(movieName !== null && movieID !== null){                                                                  
                                                         var modifyquery = "UPDATE before1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
@@ -1403,6 +1406,7 @@ app.post('/connectionstatus', (req, res)=>{
                                                 let actor2;
                                                 let movieID;
                                                 let temp;
+                                                let counter= 0;
                                                 for(let index = 0; index < node1logs.length; index++){
                                                     temp = Object.values(node1logs[index])
                                                     movieName = temp[0];
@@ -1417,15 +1421,16 @@ app.post('/connectionstatus', (req, res)=>{
                                                     if(movieYear >= 1980){
                                                         if(movieName !== null && movieID == null){
                                                             var insertquery = "INSERT INTO after1980 (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";                                                                                        
-                                                            connections.node3.query(insertquery,[generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                                                            connections.node3.query(insertquery,[generated_id+counter, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                                                                 if(err){
                                                                     console.log(err);
                                                                 }
                                                                 else{                        
-                                                                    console.log(result)
-                                                                    generated_id+=1
+                                                                    //console.log(result)
+                                                                    
                                                                 }
                                                             })
+                                                            counter = counter + 1; 
                                                         }   
                                                         else if(movieName !== null && movieID !== null){                                                                  
                                                             var modifyquery = "UPDATE after1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
@@ -1519,10 +1524,10 @@ app.get('/centralinsert', async(req, res)=>{
             
             //console.log("Delayed")
             await new Promise(resolve => setTimeout(resolve, 1000));
-            connections.node1.query(begin,(err, result)=>{
-                if(err)
-                    console.log(err);
-                else{
+            // connections.node1.query(begin,(err, result)=>{
+            //     if(err)
+            //         console.log(err);
+            //     else{
 
                 // }
             
@@ -1557,8 +1562,8 @@ app.get('/centralinsert', async(req, res)=>{
                     }
                 }
             })}
-        })
-        }
+        //})
+        //}
     })
 })
 
@@ -1621,10 +1626,10 @@ app.get('/node2insert', async(req, res)=>{
                             generated_id = highestnode3;
                         }
                         var begin = "BEGIN"
-                        connections.node2.query(begin,(err, result)=>{
-                            if(err)
-                                console.log(err);
-                            else{
+                        // connections.node2.query(begin,(err, result)=>{
+                        //     if(err)
+                        //         console.log(err);
+                        //     else{
 
                             // }
                         
@@ -1658,8 +1663,8 @@ app.get('/node2insert', async(req, res)=>{
                             }
                         })}
 
-                    })
-            }              
+                    //})
+            //}              
             }
         })}, 5000)
     
@@ -1723,10 +1728,10 @@ app.get('/node3insert', async(req, res)=>{
                         generated_id = highestnode3
                     }
                     var begin = "BEGIN"
-                    connections.node3.query(begin,(err, result)=>{
-                        if(err)
-                            console.log(err);
-                        else{
+                    // connections.node3.query(begin,(err, result)=>{
+                    //     if(err)
+                    //         console.log(err);
+                    //     else{
 
                         
                     
@@ -1760,8 +1765,8 @@ app.get('/node3insert', async(req, res)=>{
                             console.log(result)
                         }
                     })}
-                })
-                }
+                //})
+                //}
             }            
         })
     },5000) 
