@@ -595,12 +595,13 @@ app.get('/centraldelete', async(req, res)=>{
         }
         else{
             var begin = "BEGIN"
-            connections.node1.query(begin,(err, result)=>{
-                if(err)
-                    console.log(err);
-            })
+            // connections.node1.query(begin,(err, result)=>{
+            //     if(err)
+            //         console.log(err);
+            // })
             var getYear = "SELECT * FROM centraldata WHERE movie_id =" + movie;
-            connections.node1.query(getYear,[movie], (err, result)=>{
+            
+            connections.node1.query(getYear, (err, result)=>{
             if(err){
                 console.log(err);
             }
@@ -659,19 +660,21 @@ app.get('/centraldelete', async(req, res)=>{
 
 app.get('/node2delete', async(req, res)=>{
     let movie = req.cookies["movieID"]
+    let redirect = true;
     connections.node2.getConnection((err,connection)=>{
         if(err){
             console.log(err);
         }
         else{
+            console.log("NODE2 CALLED EVEN WHEN DOWN")
             var query = "DELETE FROM before1980 WHERE movie_id = " + movie;
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
             var begin = "BEGIN"
-            connections.node2.query(begin,(err, result)=>{
-                if(err)
-                    console.log(err);
-            })
+            // connections.node2.query(begin,(err, result)=>{
+            //     if(err)
+            //         console.log(err);
+            // })
             connections.node2.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -710,10 +713,10 @@ app.get('/node3delete', async(req, res)=>{
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
             var begin = "BEGIN"
-            connections.node3.query(begin,(err, result)=>{
-                if(err)
-                    console.log(err);
-            })
+            // connections.node3.query(begin,(err, result)=>{
+            //     if(err)
+            //         console.log(err);
+            // })
             connections.node3.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -1137,6 +1140,20 @@ app.post('/connectionstatus', (req, res)=>{
         }
         else{
             //query for table LOGS and use result for updating the down node
+            var getYear = "SELECT * FROM centraldata WHERE movie_id =" + movieID;
+            console.log("MOVIEID:"+movieID)
+            connections.node1.query(getYear, async(err, result)=>{
+            if(err){
+                console.log(err);
+            }
+            else{
+                console.log("OLD:"+movieYear)       
+                temp = Object.values(result[0])
+                movieYear = temp[2];
+                console.log("NEWYEAR:"+movieYear)
+            //}})
+            //await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log("MOVIEYEAR:"+movieYear)
             if(movieYear < 1980)
             {
                 connections.node2.getConnection((err,connection)=>{
@@ -1476,6 +1493,8 @@ app.post('/connectionstatus', (req, res)=>{
                     }                   
                 })
             }
+            }})
+            
             if(req.body.action == "Insert Data"){
                 res.redirect('/centralinsert')
             }
@@ -1783,11 +1802,11 @@ app.get('/centralmodify', async(req, res)=>{
 
     var query = "UPDATE centraldata SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
     var begin = "BEGIN"
-    connections.node1.query(begin,(err, result)=>{
-        if(err)
-            console.log(err);
-    // })
-        else{
+    // connections.node1.query(begin,(err, result)=>{
+    //     if(err)
+    //         console.log(err);
+    // // })
+    //     else{
             connections.node1.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log("Central Node Down");
@@ -1820,8 +1839,8 @@ app.get('/centralmodify', async(req, res)=>{
                     }
                 }
             })
-        }
-    })
+        //}
+    //})
 })
 
 app.get('/node2modify', async(req, res)=>{
@@ -1842,10 +1861,10 @@ app.get('/node2modify', async(req, res)=>{
         }
         else{
             var begin = "BEGIN"
-            connections.node2.query(begin,(err, result)=>{
-                if(err)
-                    console.log(err);
-                else{
+            // connections.node2.query(begin,(err, result)=>{
+            //     if(err)
+            //         console.log(err);
+            //     else{
 
                 
             
@@ -1877,8 +1896,8 @@ app.get('/node2modify', async(req, res)=>{
                     }
                 }
             })}
-        })
-        }
+        // })
+        // }
     })
 })
 
@@ -1901,10 +1920,10 @@ app.get('/node3modify', async(req, res)=>{
         }
         else{
             var begin = "BEGIN"
-            connections.node3.query(begin,(err, result)=>{
-                if(err)
-                    console.log(err);
-                else{
+            // connections.node3.query(begin,(err, result)=>{
+            //     if(err)
+            //         console.log(err);
+            //     else{
 
                 
             connections.node3.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
@@ -1936,8 +1955,8 @@ app.get('/node3modify', async(req, res)=>{
                     }
                 }
             })
-        }
-    })
+    //     }
+    // })
         }
     })          
 })
