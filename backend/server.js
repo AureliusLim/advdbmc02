@@ -532,11 +532,11 @@ app.get('/node3read', (req,res)=>{
             var query = "Select * from after1980";
             var commit = "COMMIT";
             var begin = "BEGIN"
-            connections.node2.query(begin, (err, result)=>{
-                if(!err){
-                    console.log("BEGIN")
-                }
-            })
+            // connections.node3.query(begin, (err, result)=>{
+            //     if(!err){
+            //         console.log("BEGIN")
+            //     }
+            // })
             connections.node3.query(query, (err, result)=>{
                 if(err){
                     console.log(err)
