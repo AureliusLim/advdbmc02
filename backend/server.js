@@ -54,6 +54,12 @@ app.get('/readAll', async(req,res)=>{
         var commit = "COMMIT";
         console.log("CHECKER TRUE")
 
+        var begin = "BEGIN"
+        connections.node2.query(begin, (err, result)=>{
+            if(!err){
+                console.log("BEGIN")
+            }
+        })
         connections.node2.query(query, (err, result)=>{
             if(err){ }
             else{
@@ -441,6 +447,12 @@ app.get('/node3read', (req,res)=>{
             var query = "Select * from centraldata where year >= 1980";
             var commit = "COMMIT";
             console.log("redirected")
+            var begin = "BEGIN"
+            connections.node2.query(begin, (err, result)=>{
+                if(!err){
+                    console.log("BEGIN")
+                }
+            })
             connections.node1.query(query, (err, result)=>{
                 if(!err){
                     connections.node1.query(commit, (err, result)=>{
@@ -1442,11 +1454,7 @@ app.get('/centralinsert', async(req, res)=>{
             var query3 = "DO SLEEP(10);";
 
             var query4 = "COMMIT;";
-
-            connections.node1.query(begin,(err, result)=>{
-                if(err)
-                    console.log(err);
-            })
+         
             connections.node1.query(query2, (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1456,8 +1464,16 @@ app.get('/centralinsert', async(req, res)=>{
                     generated_id = result[0]['movie_id'] + 1;
                 }
             })
+            
             //console.log("Delayed")
             await new Promise(resolve => setTimeout(resolve, 1000));
+            connections.node1.query(begin,(err, result)=>{
+                if(err)
+                    console.log(err);
+                else{
+
+                // }
+            
             connections.node1.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1471,14 +1487,15 @@ app.get('/centralinsert', async(req, res)=>{
                     }
                     else{
                         console.log("DO SLEEP(10)");
+                        connections.node1.query(query4, (err, result)=>{
+                            if(err){
+                                console.log(err);
+                            }
+                            else{
+                                console.log("COMMIT");
+                            }})
                     }})
-                    connections.node1.query(query4, (err, result)=>{
-                    if(err){
-                        console.log(err);
-                    }
-                    else{
-                        console.log("COMMIT");
-                    }})
+                    
                     
                     if(Number(movieYear) < 1980){  
                         res.redirect('/node2insert')    
@@ -1487,7 +1504,8 @@ app.get('/centralinsert', async(req, res)=>{
                         res.redirect('/node3insert')
                     }
                 }
-            })
+            })}
+        })
         }
     })
 })
@@ -1554,7 +1572,10 @@ app.get('/node2insert', async(req, res)=>{
                         connections.node2.query(begin,(err, result)=>{
                             if(err)
                                 console.log(err);
-                        })
+                            else{
+
+                            // }
+                        
                         connections.node2.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                             if(err){
                                 //console.log(err);
@@ -1569,20 +1590,23 @@ app.get('/node2insert', async(req, res)=>{
                                 }
                                 else{
                                     console.log("DO SLEEP(10)");
+                                    connections.node2.query(query5, (err, result)=>{
+                                        if(err){
+                                            console.log(err);
+                                        }
+                                        else{
+                                            console.log("COMMIT");
+                                        }})
                                 }})
-                                connections.node2.query(query5, (err, result)=>{
-                                if(err){
-                                    console.log(err);
-                                }
-                                else{
-                                    console.log("COMMIT");
-                                }})
+                                
                                 if(redirect == true){
                                     res.redirect('/editData')
                                 }                    
                                 console.log(result)
                             }
-                        })
+                        })}
+
+                    })
             }              
             }
         })}, 5000)
@@ -1650,7 +1674,10 @@ app.get('/node3insert', async(req, res)=>{
                     connections.node3.query(begin,(err, result)=>{
                         if(err)
                             console.log(err);
-                    })
+                        else{
+
+                        
+                    
                     connections.node3.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                         if(err){
                             //console.log(err);
@@ -1665,21 +1692,23 @@ app.get('/node3insert', async(req, res)=>{
                             }
                             else{
                                 console.log("DO SLEEP(10)");
+                                connections.node3.query(query5, (err, result)=>{
+                                    if(err){
+                                        console.log(err);
+                                    }
+                                    else{
+                                        console.log("COMMIT");
+                                    }})
                             }})
 
-                            connections.node3.query(query5, (err, result)=>{
-                            if(err){
-                                console.log(err);
-                            }
-                            else{
-                                console.log("COMMIT");
-                            }})
+                            
                             if(redirect == true){
                                 res.redirect('/editData')
                             }                       
                             console.log(result)
                         }
-                    })
+                    })}
+                })
                 }
             }            
         })
@@ -1700,37 +1729,40 @@ app.get('/centralmodify', async(req, res)=>{
     connections.node1.query(begin,(err, result)=>{
         if(err)
             console.log(err);
-    })
-    connections.node1.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
-        if(err){
-            console.log("Central Node Down");
-        }
+    // })
         else{
-            console.log(result)
-            var query4 = "DO SLEEP(10);";
-            var query5 = "COMMIT;";
+            connections.node1.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
+                if(err){
+                    console.log("Central Node Down");
+                }
+                else{
+                    console.log(result)
+                    var query4 = "DO SLEEP(10);";
+                    var query5 = "COMMIT;";
 
-            connections.node1.query(query4, (err, result)=>{
-            if(err){
-                console.log(err);
-            }
-            else{
-                console.log("DO SLEEP(10)");
-                connections.node1.query(query5, (err, result)=>{
+                    connections.node1.query(query4, (err, result)=>{
                     if(err){
                         console.log(err);
                     }
                     else{
-                        console.log("COMMIT");
-                    }})
-            }})    
-            //no modify yet for them, copy paste if centralModify is good
-            if(Number(movieYear) < 1980){                    
-                res.redirect('/node2modify')
-            }
-            else{                    
-                res.redirect('/node3modify')
-            }
+                        console.log("DO SLEEP(10)");
+                        connections.node1.query(query5, (err, result)=>{
+                            if(err){
+                                console.log(err);
+                            }
+                            else{
+                                console.log("COMMIT");
+                            }})
+                    }})    
+                    //no modify yet for them, copy paste if centralModify is good
+                    if(Number(movieYear) < 1980){                    
+                        res.redirect('/node2modify')
+                    }
+                    else{                    
+                        res.redirect('/node3modify')
+                    }
+                }
+            })
         }
     })
 })
@@ -1756,7 +1788,10 @@ app.get('/node2modify', async(req, res)=>{
             connections.node2.query(begin,(err, result)=>{
                 if(err)
                     console.log(err);
-            })
+                else{
+
+                
+            
             connections.node2.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1784,7 +1819,8 @@ app.get('/node2modify', async(req, res)=>{
                         res.redirect('/editData')
                     }
                 }
-            })
+            })}
+        })
         }
     })
 })
@@ -1811,7 +1847,9 @@ app.get('/node3modify', async(req, res)=>{
             connections.node3.query(begin,(err, result)=>{
                 if(err)
                     console.log(err);
-            })
+                else{
+
+                
             connections.node3.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1841,6 +1879,8 @@ app.get('/node3modify', async(req, res)=>{
                     }
                 }
             })
+        }
+    })
         }
     })          
 })
