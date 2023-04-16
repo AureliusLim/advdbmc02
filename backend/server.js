@@ -209,43 +209,74 @@ app.get('/readAll', async(req,res)=>{
 })
 
 // check if good
-app.get('/centralreadOne', (req,res)=>{
-    connections.node1.getConnection((err,connection)=>{
+app.post('/centralreadOne', async(req,res)=>{
+    let arr=""
+    let checker = true;
+    connections.node2.getConnection(async(err, connection)=>{
         if(err){
-            // Put error message that server is down
+            checker = false;
+            console.log("failed connect node2")
+        }
+    })
+    connections.node3.getConnection(async(err, connection)=>{
+        if(err){
+            checker = false;
+        }
+    })
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    
+        if(checker == true){
+            console.log(checker)
+            // slave nodes are up
             let headerString;
             let header;
-            let arr="";
-            let arr2="";
+           
             let movieID = req.body.movie_id;
-
+            
             var query = "SELECT * FROM before1980 WHERE movie_id = " + movieID;
             var query1 = "SELECT * FROM after1980 WHERE movie_id = " + movieID;
             var commit = "COMMIT";
-
-            connections.node2.query(query, (err, result)=>{
+            console.log(query)
+            connections.node2.query(query, (err, result)=>{ // search node2 for the record
                 if(err){ 
                     console.log(err)              
                 }
                 
-                else if(result){
+                else if(result.length > 0){ // dapat may laman
+                    console.log(result)
                     header = Object.keys(result[0]);
                     headerString = header.join(",");
                     arr += headerString;
                     arr += "\n";
                     let temp;
             
-                    temp = Object.values(result[i]);
+                    temp = Object.values(result[0]);
                     temp[1] = temp[1].replaceAll(',','');
                     temp = temp.toString();
                     temp += ',';
                     arr += temp;
                     arr += "\n";
+                    console.log(arr)
                     connections.node2.query(commit, (err, result)=>{
                         if(err) { console.log(err)}
                     })
+                    try {
+                        console.log("INSIDE:"+arr)
+                        fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{             
+                            if(err){
+                                console.log(err)
+                            }
+                            else{
+                                console.log("saved")
+                                res.download(path.join(__dirname, 'files', "output.csv"))
+                            }
+                        });
+                        // file written successfully
+                    } catch (err) {
+                        console.error(err);
+                    }
                 }   
-                else{
+                else{ // if not in node2 check node3
                     connections.node2.query(commit, (err, result)=>{
                         if(err) { console.log(err)}
                     })
@@ -254,14 +285,14 @@ app.get('/centralreadOne', (req,res)=>{
                         if(err){
                             console.log(err)
                         }
-                        else if(result){
+                        else if(result.length > 0){
                             header = Object.keys(result[0]);
                             headerString = header.join(",");
                             arr += headerString;
                             arr += "\n";
                             let temp;
 
-                            temp = Object.values(result[i]);
+                            temp = Object.values(result[0]);
                             temp[1] = temp[1].replaceAll(',','');
                             temp = temp.toString();
                             temp += ',';
@@ -270,6 +301,21 @@ app.get('/centralreadOne', (req,res)=>{
                             connections.node3.query(commit, (err, result)=>{
                                 if(err) { console.log(err)}
                             })
+                            try {
+                                console.log("INSIDE:"+arr)
+                                fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), arr, async(err)=>{             
+                                    if(err){
+                                        console.log(err)
+                                    }
+                                    else{
+                                        console.log("saved")
+                                        res.download(path.join(__dirname, 'files', "output.csv"))
+                                    }
+                                });
+                                // file written successfully
+                            } catch (err) {
+                                console.error(err);
+                            }
                         }
                         else{
                             console.log("Movie Id does not exist")
@@ -280,23 +326,10 @@ app.get('/centralreadOne', (req,res)=>{
                     })             
                 }
             })                   
-            try {
-                fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), finalarr, async(err)=>{             
-                    if(err){
-                        console.log(err)
-                    }
-                    else{
-                        console.log("saved")
-                        res.download(path.join(__dirname, 'files', "output.csv"))
-                    }
-                });
-                // file written successfully
-            } catch (err) {
-                console.error(err);
-            }
+           
         }
         
-        else{
+        else{ // central is up and one of the slave is down
             let movieID = req.body.movie_id
             var query = "SELECT * FROM centraldata WHERE movie_id = " + movieID
             var commit = "COMMIT";
@@ -304,10 +337,9 @@ app.get('/centralreadOne', (req,res)=>{
                 if(err){
                     console.log(err)
                 }
-                else{
+                else if(result.length > 0){
                     var header = Object.keys(result[0]);
                     headerString = header.join(",");
-                    var arr="";
                     arr += headerString;
                     arr += "\n";
                     var temp;
@@ -338,10 +370,13 @@ app.get('/centralreadOne', (req,res)=>{
                     } catch (err) {
                         console.error(err);
                     }
+                }
+                else{
+                    console.log("MOVIE DOES NOT EXIST")
                 }          
             })
         }
-    })
+    
 })
 
 app.get('/node2read', (req,res)=>{
@@ -1248,14 +1283,14 @@ app.post('/connectionstatus', (req, res)=>{
                                                     }  
                                                 }                                               
                                             }
-                                            // var resetQuery = "DELETE FROM central.logs"
-                                            // connections.node1.query(resetQuery, (err, result)=>{
-                                            //     if (err){
-                                            //         console.log(err)
-                                            //     }
-                                            //     else{                                                   
-                                            //     }
-                                            // })                       
+                                            var resetQuery = "DELETE FROM central.logs"
+                                            connections.node1.query(resetQuery, (err, result)=>{
+                                                if (err){
+                                                    console.log(err)
+                                                }
+                                                else{                                                   
+                                                }
+                                            })                       
                                         })                               
                                     }                          
                                 })
@@ -1325,6 +1360,7 @@ app.post('/connectionstatus', (req, res)=>{
                                     console.log("node3 is now up")
 
                                     var query1 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
+                                    var query2 = "SELECT * from central.logs where movie_id is null;"
                                     let generated_id;
                                     //oppai8
                                     connections.node1.query(query1, (err, result)=>{
@@ -1336,7 +1372,17 @@ app.post('/connectionstatus', (req, res)=>{
                                             generated_id = result[0]['movie_id'] + 1;
                                         }
                                     })
+                                    connections.node1.query(query2, async(err, result)=>{
+                                        if(err){
+                                            console.log(err);
+                                        }
+                                        else{
+                                        
+                                            lengthinsert = result.length
+                                        }
+                                    })
                                     await new Promise(resolve => setTimeout(resolve, 500));
+                                    generated_id = generated_id - result.length
                                     connections.node1.getConnection(async(err, connection)=>{
                                         if (!err){
                                             var resultquery = "SELECT * FROM central.logs"
