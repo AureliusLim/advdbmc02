@@ -483,7 +483,7 @@ app.get('/node3read', (req,res)=>{
             var commit = "COMMIT";
             console.log("redirected")
             var begin = "BEGIN"
-            connections.node2.query(begin, (err, result)=>{
+            connections.node1.query(begin, (err, result)=>{
                 if(!err){
                     console.log("BEGIN")
                 }
@@ -531,6 +531,12 @@ app.get('/node3read', (req,res)=>{
         else{
             var query = "Select * from after1980";
             var commit = "COMMIT";
+            var begin = "BEGIN"
+            connections.node2.query(begin, (err, result)=>{
+                if(!err){
+                    console.log("BEGIN")
+                }
+            })
             connections.node3.query(query, (err, result)=>{
                 if(err){
                     console.log(err)
@@ -573,7 +579,7 @@ app.get('/node3read', (req,res)=>{
                 }              
             })
         }
-    })
+        })
 })
 
 app.get('/centraldelete', async(req, res)=>{
