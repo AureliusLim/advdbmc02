@@ -43,7 +43,7 @@ app.get('/readAll', async(req,res)=>{
             checker = false;
         }
     })
-     await new Promise(resolve => setTimeout(resolve, 10000));
+    await new Promise(resolve => setTimeout(resolve, 10000));
     if(checker == true){ // slave nodes are up
         let headerString;
         let header;
@@ -53,6 +53,7 @@ app.get('/readAll', async(req,res)=>{
         var query1 = "Select * from after1980";
         var commit = "COMMIT";
         console.log("CHECKER TRUE")
+
         connections.node2.query(query, (err, result)=>{
             if(err){ }
             else{
@@ -74,6 +75,7 @@ app.get('/readAll', async(req,res)=>{
                 connections.node2.query(commit, (err, result)=>{
                     if(err) { console.log(err)}
                 })
+
                 connections.node3.query(query1, (err, result)=>{
                     if(err){ }
                     else{                            
@@ -154,7 +156,7 @@ app.get('/readAll', async(req,res)=>{
             }
         })
     }
-    else{
+    else{  
         var query = "Select * from centraldata";
         var commit = "COMMIT";
         connections.node1.query(query, (err, result)=>{
@@ -241,6 +243,7 @@ app.get('/centralreadOne', (req,res)=>{
                     connections.node2.query(commit, (err, result)=>{
                         if(err) { console.log(err)}
                     })
+
                     connections.node3.query(query1, (err, result)=>{
                         if(err){
                             console.log(err)
@@ -272,8 +275,7 @@ app.get('/centralreadOne', (req,res)=>{
                 }
             })                   
             try {
-                fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), finalarr, async(err)=>{
-                
+                fs.writeFile(path.resolve(__dirname, 'files', "output.csv"), finalarr, async(err)=>{             
                     if(err){
                         console.log(err)
                     }
@@ -344,7 +346,7 @@ app.get('/node2read', (req,res)=>{
             let arr="";
             var query = "Select * from centraldata where year < 1980";
             var commit = "COMMIT";
-           console.log("redirected")
+            console.log("redirected")
             connections.node1.query(query, (err, result)=>{
                 if(err){}
                 else{
@@ -539,6 +541,11 @@ app.get('/centraldelete', async(req, res)=>{
             console.log(err);
         }
         else{
+            var begin = "BEGIN"
+            connections.node1.query(begin,(err, result)=>{
+                if(err)
+                    console.log(err);
+            })
             var getYear = "SELECT * FROM centraldata WHERE movie_id =" + movie;
             connections.node1.query(getYear,[movie], (err, result)=>{
             if(err){
@@ -607,6 +614,11 @@ app.get('/node2delete', async(req, res)=>{
             var query = "DELETE FROM before1980 WHERE movie_id = " + movie;
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
+            var begin = "BEGIN"
+            connections.node2.query(begin,(err, result)=>{
+                if(err)
+                    console.log(err);
+            })
             connections.node2.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -623,7 +635,7 @@ app.get('/node2delete', async(req, res)=>{
                 console.log("DO SLEEP(10)");
             }})
 
-            connections.node1.query(query3, (err, result)=>{
+            connections.node2.query(query3, (err, result)=>{
             if(err){
                 console.log(err);
             }
@@ -644,6 +656,11 @@ app.get('/node3delete', async(req, res)=>{
             var query = "DELETE FROM after1980 WHERE movie_id = " + movie;
             var query2 = "DO SLEEP(10);";
             var query3 = "COMMIT;";
+            var begin = "BEGIN"
+            connections.node3.query(begin,(err, result)=>{
+                if(err)
+                    console.log(err);
+            })
             connections.node3.query(query, (err, result)=>{
             if(err){
                 console.log(err);
@@ -652,7 +669,7 @@ app.get('/node3delete', async(req, res)=>{
                 console.log("Record Deleted: ", result);
             }})
 
-            connections.node2.query(query2, (err, result)=>{
+            connections.node3.query(query2, (err, result)=>{
             if(err){
                 console.log(err);
             }
@@ -660,7 +677,7 @@ app.get('/node3delete', async(req, res)=>{
                 console.log("DO SLEEP(10)");
             }})
 
-            connections.node1.query(query3, (err, result)=>{
+            connections.node3.query(query3, (err, result)=>{
             if(err){
                 console.log(err);
             }
@@ -1416,6 +1433,8 @@ app.get('/centralinsert', async(req, res)=>{
 
         }
         else{
+            var begin = "BEGIN";
+
             var query = "INSERT INTO centraldata (movie_id, name, year, genre, director_id, actor1, actor2) VALUES(?,?,?,?,?,?,?)";
             // generate movieid
             var query2 = "SELECT * from centraldata ORDER BY movie_id DESC LIMIT 1;"
@@ -1423,6 +1442,11 @@ app.get('/centralinsert', async(req, res)=>{
             var query3 = "DO SLEEP(10);";
 
             var query4 = "COMMIT;";
+
+            connections.node1.query(begin,(err, result)=>{
+                if(err)
+                    console.log(err);
+            })
             connections.node1.query(query2, (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1526,7 +1550,11 @@ app.get('/node2insert', async(req, res)=>{
                         else{
                             generated_id = highestnode3;
                         }
-
+                        var begin = "BEGIN"
+                        connections.node2.query(begin,(err, result)=>{
+                            if(err)
+                                console.log(err);
+                        })
                         connections.node2.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                             if(err){
                                 //console.log(err);
@@ -1535,14 +1563,14 @@ app.get('/node2insert', async(req, res)=>{
                                 var query4 = "DO SLEEP(10);";
                                 var query5 = "COMMIT;";
 
-                                connections.node1.query(query4, (err, result)=>{
+                                connections.node2.query(query4, (err, result)=>{
                                 if(err){
                                     console.log(err);
                                 }
                                 else{
                                     console.log("DO SLEEP(10)");
                                 }})
-                                connections.node1.query(query5, (err, result)=>{
+                                connections.node2.query(query5, (err, result)=>{
                                 if(err){
                                     console.log(err);
                                 }
@@ -1618,6 +1646,11 @@ app.get('/node3insert', async(req, res)=>{
                     else{
                         generated_id = highestnode3
                     }
+                    var begin = "BEGIN"
+                    connections.node3.query(begin,(err, result)=>{
+                        if(err)
+                            console.log(err);
+                    })
                     connections.node3.query(query, [generated_id, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                         if(err){
                             //console.log(err);
@@ -1626,7 +1659,7 @@ app.get('/node3insert', async(req, res)=>{
                             var query4 = "DO SLEEP(10);";
                             var query5 = "COMMIT;";
 
-                            connections.node1.query(query4, (err, result)=>{
+                            connections.node3.query(query4, (err, result)=>{
                             if(err){
                                 console.log(err);
                             }
@@ -1634,7 +1667,7 @@ app.get('/node3insert', async(req, res)=>{
                                 console.log("DO SLEEP(10)");
                             }})
 
-                            connections.node1.query(query5, (err, result)=>{
+                            connections.node3.query(query5, (err, result)=>{
                             if(err){
                                 console.log(err);
                             }
@@ -1663,6 +1696,11 @@ app.get('/centralmodify', async(req, res)=>{
     let actor2 = req.cookies["actor2"]
 
     var query = "UPDATE centraldata SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
+    var begin = "BEGIN"
+    connections.node1.query(begin,(err, result)=>{
+        if(err)
+            console.log(err);
+    })
     connections.node1.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
         if(err){
             console.log("Central Node Down");
@@ -1685,9 +1723,7 @@ app.get('/centralmodify', async(req, res)=>{
                     else{
                         console.log("COMMIT");
                     }})
-            }})
-            
-            
+            }})    
             //no modify yet for them, copy paste if centralModify is good
             if(Number(movieYear) < 1980){                    
                 res.redirect('/node2modify')
@@ -1708,17 +1744,19 @@ app.get('/node2modify', async(req, res)=>{
     let actor1 = req.cookies["actor1"]
     let actor2 = req.cookies["actor2"]
     let redirect = true
-    //test if good
     var query = "UPDATE before1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
     
-    // // generate movieid     
-    // await new Promise(resolve => setTimeout(resolve, 500));
     connections.node2.getConnection((err,connection)=>{
         if(err){
             console.log("node2 is down");
             redirect = false;
         }
         else{
+            var begin = "BEGIN"
+            connections.node2.query(begin,(err, result)=>{
+                if(err)
+                    console.log(err);
+            })
             connections.node2.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1728,14 +1766,14 @@ app.get('/node2modify', async(req, res)=>{
                     var query4 = "DO SLEEP(10);";
                     var query5 = "COMMIT;";
 
-                    connections.node1.query(query4, (err, result)=>{
+                    connections.node2.query(query4, (err, result)=>{
                     if(err){
                         console.log(err);
                     }
                     else{
                         console.log("DO SLEEP(10)");
                     }})
-                    connections.node1.query(query5, (err, result)=>{
+                    connections.node2.query(query5, (err, result)=>{
                     if(err){
                         console.log(err);
                     }
@@ -1760,16 +1798,20 @@ app.get('/node3modify', async(req, res)=>{
     let actor1 = req.cookies["actor1"]
     let actor2 = req.cookies["actor2"]
     let redirect = true;
-    
-    //test if good
+
     var query = "UPDATE after1980 SET name = '" + movieName + "', year = " + movieYear + ", genre = '" + movieGenre + "', director_id = " + director + ", actor1 = " + actor1 + ", actor2 = " + actor2 + " WHERE movie_id = " + movieID;
-    
+
     connections.node3.getConnection((err,connection)=>{
         if(err){
             console.log("node3 is down")
             redirect = false;
         }
         else{
+            var begin = "BEGIN"
+            connections.node3.query(begin,(err, result)=>{
+                if(err)
+                    console.log(err);
+            })
             connections.node3.query(query, [movieID, movieName, movieYear, movieGenre, director, actor1, actor2], (err, result)=>{
                 if(err){
                     console.log(err);
@@ -1779,13 +1821,13 @@ app.get('/node3modify', async(req, res)=>{
                     var query4 = "DO SLEEP(10);";
                     var query5 = "COMMIT;";
 
-                    connections.node1.query(query4, (err, result)=>{
+                    connections.node3.query(query4, (err, result)=>{
                     if(err){
                         console.log(err);
                     }
                     else{
                         console.log("DO SLEEP(10)");
-                        connections.node1.query(query5, (err, result)=>{
+                        connections.node3.query(query5, (err, result)=>{
                         if(err){
                             console.log(err);
                         }
@@ -1811,8 +1853,26 @@ app.get('/readUncommitted', async(req, res)=>{
         }
         else{
             var query = "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;";
-            var query2 = "SET autocommit = 0;";
+            var query2 = "SET autocommit = 1;";
             connections.node1.query(query, (err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("uncommitted")
+                    // console.log(result)
+                }
+            })
+            connections.node2.query(query, (err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("uncommitted")
+                    // console.log(result)
+                }
+            })
+            connections.node3.query(query, (err, result)=>{
                 if(err){
                     console.log(err);
                 }
@@ -1829,14 +1889,30 @@ app.get('/readUncommitted', async(req, res)=>{
                     console.log(err);
                 }
                 else{
-                    console.log("autocommit = 0")
+                    console.log("autocommit = 1")
                     // console.log(result)
                 }
             })
-            
+            connections.node2.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 1")
+                    // console.log(result)
+                }
+            })
+            connections.node3.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 1")
+                    // console.log(result)
+                }
+            })
         }
     })
-
     res.redirect("/editData")
 })
 
@@ -1858,10 +1934,48 @@ app.get('/readCommitted', async(req, res)=>{
 
                 }
             })
+            connections.node2.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("committed")
+                    // console.log(result)
+
+                }
+            })
+            connections.node3.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("committed")
+                    // console.log(result)
+
+                }
+            })
 
             await new Promise(resolve => setTimeout(resolve, 500));
 
             connections.node1.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    // console.log(result)
+                }
+            })
+            connections.node2.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    // console.log(result)
+                }
+            })
+            connections.node3.query(query2, async(err, result)=> {
                 if(err){
                     console.log(err);
                 }
@@ -1893,9 +2007,47 @@ app.get('/readRepeatable', async(req, res)=>{
 
                 }
             })
+            connections.node2.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("repeatable")
+                    // console.log(result)
+
+                }
+            })
+            connections.node3.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("repeatable")
+                    // console.log(result)
+
+                }
+            })
             await new Promise(resolve => setTimeout(resolve, 500));
 
             connections.node1.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    // console.log(result)
+                }
+            })
+            connections.node2.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    // console.log(result)
+                }
+            })
+            connections.node3.query(query2, async(err, result)=> {
                 if(err){
                     console.log(err);
                 }
@@ -1927,9 +2079,47 @@ app.get('/serializable', async(req, res)=>{
 
                 }
             })
+            connections.node2.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("serializable")
+                    // console.log(result)
+
+                }
+            })
+            connections.node3.query(query, async(err, result)=>{
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("serializable")
+                    // console.log(result)
+
+                }
+            })
             await new Promise(resolve => setTimeout(resolve, 500));
 
             connections.node1.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    // console.log(result)
+                }
+            })
+            connections.node2.query(query2, async(err, result)=> {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log("autocommit = 0")
+                    // console.log(result)
+                }
+            })
+            connections.node3.query(query2, async(err, result)=> {
                 if(err){
                     console.log(err);
                 }
